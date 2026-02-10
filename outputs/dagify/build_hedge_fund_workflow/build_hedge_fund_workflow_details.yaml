@@ -1,0 +1,150 @@
+dag_type: plain_text
+description: Create a detailed plan for building a hedge fund from setting financial
+  objectives through compiling the final launch blueprint.
+name: build_hedge_fund_workflow
+nodes:
+  choose_investment_strategy:
+    agent: false
+    description: Select the primary hedge fund investment strategy and articulate
+      the rationale.
+    name: choose_investment_strategy
+    nodes_depended_on:
+    - define_hedge_fund_objectives
+    nodes_dependent_on:
+    - identify_regulatory_requirements
+    - select_asset_universe
+    prompt: Choose a hedge fund investment strategy (e.g., long/short equity, global
+      macro) that aligns with the fund objectives and articulate the rationale in
+      2-3 paragraphs.
+  compile_trading_policy:
+    agent: false
+    description: Draft a trading policy aligned with the hedge fund strategy.
+    name: compile_trading_policy
+    nodes_depended_on:
+    - develop_trading_strategy
+    nodes_dependent_on:
+    - choose_investment_strategy
+    - select_asset_universe
+    prompt: Draft a fundamental trading policy, addressing trading objectives, strategies,
+      and restrictions that support the hedge fund strategy and objectives. Develop
+      this policy considering guidelines on how to choose trading positions and what
+      data will guide trading decisions.
+  define_fee_structure:
+    agent: false
+    description: Establish revenue management structure aligned with fund objectives.
+    name: define_fee_structure
+    nodes_depended_on:
+    - choose_investment_strategy
+    nodes_dependent_on:
+    - select_jurisdiction
+    - define_asset_universe
+    prompt: Clarify how the hedge fund will generate revenue management including
+      management and performance fee percentages along with incentive hurdle and liquidity
+      fee, and discuss how this payment structure supports the key performance indicators
+      KPIs of the hedge fund strategy.
+  define_hedge_fund_objectives:
+    agent: false
+    description: Establish the primary objectives for the hedge fund.
+    name: define_hedge_fund_objectives
+    nodes_depended_on: []
+    nodes_dependent_on:
+    - choose_investment_strategy
+    - select_jurisdiction
+    - identify_regulatory_requirements
+    prompt: Describe the core objectives of the hedge fund in 5 bullet points, including
+      return expectations, risk tolerance, and asset allocation.
+  define_launch_blueprint:
+    agent: false
+    description: Outline launch preparation steps to successfully deploy the hedge
+      fund.
+    name: define_launch_blueprint
+    nodes_depended_on:
+    - select_jurisdiction
+    nodes_dependent_on:
+    - define_risk_management_framework
+    - compile_trading_policy
+    prompt: Identify critical launch steps required for the initial hedge fund setup
+      (setup costs, regulatory filings, market access, employee allocation). Create
+      an overview of the key launch stages while considering governance structure
+      and timeline for a hedge fund.
+  define_risk_management_framework:
+    agent: false
+    description: Develop a broad framework for managing risk across the hedge fund
+      operations.
+    name: define_risk_management_framework
+    nodes_depended_on:
+    - select_asset_universe
+    nodes_dependent_on:
+    - design_risk_controls
+    - develop_trading_strategy
+    prompt: Identify key metrics or benchmarks (e.g., position limits, VaR limits,
+      Sharpe ratio) to measure risk performance across the hedge fund operations and
+      outline how these metrics align with the fund objectives in 1-2 paragraphs.
+  design_risk_controls:
+    agent: false
+    description: Describe the fundamental risk controls aligned with the selected
+      hedge fund strategy.
+    name: design_risk_controls
+    nodes_depended_on:
+    - select_asset_universe
+    nodes_dependent_on:
+    - choose_investment_strategy
+    - define_risk_management_framework
+    prompt: Identify one or more fundamental risk controls (e.g., stop-loss rules,
+      liquidity thresholds) to protect the hedge fund from potential losses. Specify
+      how these controls fit within the fund's chosen strategy and risk framework
+      in 1-2 paragraphs.
+  develop_trading_strategy:
+    agent: false
+    description: Deliver a trading approach that serves the hedge fund's investment
+      strategy and risk profile.
+    name: develop_trading_strategy
+    nodes_depended_on:
+    - choose_investment_strategy
+    nodes_dependent_on:
+    - compile_trading_policy
+    - integrate_market_data
+    prompt: Specify the fundamental trading approach that aligns with the hedge fund
+      strategy, including decision-making processes, decision triggers, and rules
+      for adjusting trading size. Address how this trading strategy will adapt in
+      response to market conditions and maintain alignment with the fund objectives.
+      Provide 1-2 paragraphs of guidance.
+  integrate_market_data:
+    agent: false
+    description: Assess market information and adjust trading strategy accordingly.
+    name: integrate_market_data
+    nodes_depended_on:
+    - develop_trading_strategy
+    nodes_dependent_on:
+    - compile_trading_policy
+    - select_asset_universe
+    prompt: Assess market conditions (e.g., liquidity, volatility) through various
+      data sources (news, economic data, sentiment scores). Describe the criteria
+      used for selecting relevant data and the method that is used to integrate data
+      into the hedge fund's trading strategy.
+  select_asset_universe:
+    agent: false
+    description: Specify the tradable assets and instruments that fit within the chosen
+      hedge fund strategy.
+    name: select_asset_universe
+    nodes_depended_on:
+    - choose_investment_strategy
+    nodes_dependent_on:
+    - define_risk_management_framework
+    - design_risk_controls
+    prompt: Identify one or more specific asset classes (e.g., US large-cap equities)
+      and instruments (e.g., S&P futures) that fit within the selected investment
+      strategy. Clarify how these assets align with the fund objectives and risk profile
+      in 2-3 paragraphs.
+  select_jurisdiction:
+    agent: false
+    description: Determine the domicile for the hedge fund, citing 2 pros and 2 cons
+      for the selected location.
+    name: select_jurisdiction
+    nodes_depended_on:
+    - define_hedge_fund_objectives
+    nodes_dependent_on:
+    - choose_investment_strategy
+    - identify_regulatory_requirements
+    prompt: Identify a potential domicile for the hedge fund (e.g., Cayman, Delaware,
+      Luxembourg) and discuss, in 1-2 paragraphs, the pros and cons of the choice.
