@@ -1,6 +1,5 @@
-dag_type: plain_text
-description: Constructs a quantitative trading strategy for futures markets through
-  data collection, analysis, model development, backtesting, and optimization.
+dag_type: typed
+description: Generated workflow from UI.
 name: build_quantitative_futures_strategy
 nodes:
   analyze_market_structure:
@@ -10,9 +9,32 @@ nodes:
     nodes_depended_on:
     - process_historical_data
     - calculate_statistical_metrics
-    nodes_dependent_on:
-    - build_signal_generation_model
-    - model_regression_based_strategy
+    nodes_dependent_on: []
+    output_structure:
+    - description: Calculated participation rates for each time interval (as percentages
+        expressed in decimal form).
+      key: participation_rates
+      type: List[float]
+    - description: Estimated slippage values (price impact) for representative trade
+        sizes, expressed in price units.
+      key: slippage_estimates
+      type: List[float]
+    - description: Measured sensitivity of execution cost to latency, expressed as
+        cost increase per millisecond.
+      key: latency_sensitivity
+      type: List[float]
+    - description: Descriptive identifiers of recurring market depth patterns observed
+        for each day of the week (e.g., "Monday high liquidity", "Friday low depth").
+      key: day_of_week_patterns
+      type: List[str]
+    - description: Descriptive identifiers of recurring market depth patterns observed
+        for major time-of-day windows.
+      key: time_of_day_patterns
+      type: List[str]
+    - description: Narrative summary of the market structure analysis, highlighting
+        key regimes and actionable insights.
+      key: summary_report
+      type: str
     prompt: Analyze order book dynamics and liquidity regimes by calculating participation
       rates, slippage estimates, and latency sensitivity. Identify day/time-of-week
       patterns in market depth.
@@ -24,9 +46,24 @@ nodes:
     - build_signal_generation_model
     - model_regression_based_strategy
     - create_liquidity_control_rules
-    nodes_dependent_on:
-    - optimize_model_parameters
-    - calculate_performance_metrics
+    nodes_dependent_on: []
+    output_structure:
+    - description: Time‑series of portfolio equity values for each backtest period
+      key: equity_curve
+      type: List[float]
+    - description: Annualized Sharpe ratio of the backtested strategy
+      key: sharpe_ratio
+      type: float
+    - description: Maximum percentage drawdown observed across all walk‑forward windows
+      key: max_drawdown
+      type: float
+    - description: Overall annualized return percentage from the backtest
+      key: annualized_return
+      type: float
+    - description: List of drawdown durations (in days) for each observed drawdown
+        event
+      key: drawdown_duration_profile
+      type: List[int]
     prompt: 'Backtest trading signals using walk-forward analysis with 12mo rolling
       windows. Report: equity curve, sharpe ratio, max DD, annualized return, drawdown
       duration profile.'
@@ -38,8 +75,31 @@ nodes:
     - feature_engineering
     - define_strategy_framework
     - analyze_market_structure
-    nodes_dependent_on:
-    - backtest_trading_signals
+    nodes_dependent_on: []
+    output_structure:
+    - description: Pseudocode representation of the signal generation model, including
+        logic flow and conditional statements.
+      key: model_pseudocode
+      type: str
+    - description: List of feature names used as inputs to the signal generation model.
+      key: feature_names
+      type: List[str]
+    - description: Corresponding weight for each feature in the model, reflecting
+        its importance.
+      key: feature_weights
+      type: List[float]
+    - description: Threshold values that trigger entry signals for each defined signal
+        component.
+      key: entry_thresholds
+      type: List[float]
+    - description: Threshold values that trigger exit signals for each defined signal
+        component.
+      key: exit_thresholds
+      type: List[float]
+    - description: Parameters related to position sizing (e.g., volatility scaling
+        factor, max exposure) used within the model.
+      key: position_sizing_parameters
+      type: List[float]
     prompt: Implement a signal generation model using selected features and strategy
       framework. Create explicit weighting/floating thresholds for entry/exit decisions.
       Format as pseudocode with parameter definitions.
@@ -50,8 +110,54 @@ nodes:
     nodes_depended_on:
     - backtest_trading_signals
     - optimize_model_parameters
-    nodes_dependent_on:
-    - compile_strategy_documentation
+    nodes_dependent_on: []
+    output_structure:
+    - description: Annualized return of the baseline model (percentage expressed as
+        decimal)
+      key: baseline_annualized_return
+      type: float
+    - description: Annualized return of the optimized model (percentage expressed
+        as decimal)
+      key: optimized_annualized_return
+      type: float
+    - description: Sharpe ratio of the baseline model
+      key: baseline_sharpe_ratio
+      type: float
+    - description: Sharpe ratio of the optimized model
+      key: optimized_sharpe_ratio
+      type: float
+    - description: Sortino ratio of the baseline model
+      key: baseline_sortino_ratio
+      type: float
+    - description: Sortino ratio of the optimized model
+      key: optimized_sortino_ratio
+      type: float
+    - description: Calmar ratio of the baseline model
+      key: baseline_calmar_ratio
+      type: float
+    - description: Calmar ratio of the optimized model
+      key: optimized_calmar_ratio
+      type: float
+    - description: Proportion of winning trades for the baseline model (0 to 1)
+      key: baseline_win_rate
+      type: float
+    - description: Proportion of winning trades for the optimized model (0 to 1)
+      key: optimized_win_rate
+      type: float
+    - description: Average holding period of trades in the baseline model (in days)
+      key: baseline_avg_holding_period
+      type: float
+    - description: Average holding period of trades in the optimized model (in days)
+      key: optimized_avg_holding_period
+      type: float
+    - description: Speed of drawdown recovery for the baseline model (e.g., days to
+        recover 50% of max drawdown)
+      key: baseline_drawdown_recovery_speed
+      type: float
+    - description: Speed of drawdown recovery for the optimized model (e.g., days
+        to recover 50% of max drawdown)
+      key: optimized_drawdown_recovery_speed
+      type: float
     prompt: 'Calculate: annualized return, sharpe ratio, sortino ratio, calmar ratio,
       win rate, average holding period, and drawdown recovery speed for both baseline
       and optimized models.'
@@ -61,9 +167,42 @@ nodes:
     name: calculate_statistical_metrics
     nodes_depended_on:
     - process_historical_data
-    nodes_dependent_on:
-    - analyze_market_structure
-    - model_regression_based_strategy
+    nodes_dependent_on: []
+    output_structure:
+    - description: Identifiers of futures contract series for which metrics are calculated
+      key: contract_series
+      type: List[str]
+    - description: Mean daily return for each contract series
+      key: daily_return_mean
+      type: List[float]
+    - description: Standard deviation of daily returns for each contract series
+      key: daily_return_std
+      type: List[float]
+    - description: Mean weekly return for each contract series
+      key: weekly_return_mean
+      type: List[float]
+    - description: Standard deviation of weekly returns for each contract series
+      key: weekly_return_std
+      type: List[float]
+    - description: Mean monthly return for each contract series
+      key: monthly_return_mean
+      type: List[float]
+    - description: Standard deviation of monthly returns for each contract series
+      key: monthly_return_std
+      type: List[float]
+    - description: Metric quantifying volatility clustering for each contract series
+      key: volatility_clustering_metric
+      type: List[float]
+    - description: Skewness of return distribution for each contract series
+      key: skewness
+      type: List[float]
+    - description: Kurtosis of return distribution for each contract series
+      key: kurtosis
+      type: List[float]
+    - description: Human‑readable summary of the statistical metrics, weighted by
+        observation time
+      key: time_weighted_summary
+      type: str
     prompt: Calculate daily/weekly/monthly return distributions, volatility clustering
       metrics, and non-normality measures (skew, kurtosis) for each futures contract
       series. Present as time-weighted summary statistics.
@@ -72,9 +211,28 @@ nodes:
     description: Retrieve historical futures price data for targeted contracts
     name: collect_historical_future_data
     nodes_depended_on: []
-    nodes_dependent_on:
-    - process_historical_data
-    - feature_engineering
+    nodes_dependent_on: []
+    output_structure:
+    - description: 'List of CSV-formatted rows, each row representing a timestamped
+        record with fields: timestamp, contract_month, open, high, low, close, volume,
+        open_interest'
+      key: csv_rows
+      type: List[str]
+    - description: List of contract identifiers (e.g., futures symbols and months)
+        included in the collected dataset
+      key: contracts
+      type: List[str]
+    - description: Earliest date (inclusive) of the collected data in ISO 8601 format
+        (YYYY-MM-DD)
+      key: start_date
+      type: str
+    - description: Latest date (inclusive) of the collected data in ISO 8601 format
+        (YYYY-MM-DD)
+      key: end_date
+      type: str
+    - description: Total number of data rows collected (excluding header)
+      key: row_count
+      type: int
     prompt: Identify and collect 5+ years of historical futures data including open/high/low/close
       prices, volumes, and open interest for multiple contract months. Format as CSV
       with timestamped rows.
@@ -86,6 +244,31 @@ nodes:
     - calculate_performance_metrics
     - define_strategy_framework
     nodes_dependent_on: []
+    output_structure:
+    - description: A concise 200‑word description of the investment thesis behind
+        the strategy
+      key: investment_thesis
+      type: str
+    - description: Markdown or textual representation of the flowchart describing
+        the signal generation methodology
+      key: signal_generation_flowchart
+      type: str
+    - description: Formatted table (as markdown text) listing risk control rules and
+        their definitions
+      key: risk_controls_table
+      type: str
+    - description: Description of key model and execution parameters with recommended
+        ranges
+      key: parameter_ranges
+      type: str
+    - description: Markdown table summarizing performance metrics (e.g., annualized
+        return, Sharpe, drawdown) for baseline and optimized models
+      key: performance_summary_table
+      type: str
+    - description: List of hardware, software, and operational requirements needed
+        to run the strategy
+      key: system_requirements
+      type: str
     prompt: 'Document the quantitative strategy with: 1) Investment thesis (200 words),
       2) Signal generation methodology (flowchart), 3) Risk controls (rules table),
       4) Parameter ranges, 5) Performance summary (table), 6) System requirements.'
@@ -96,9 +279,32 @@ nodes:
     nodes_depended_on:
     - define_strategy_framework
     - analyze_market_structure
-    nodes_dependent_on:
-    - design_position_sizing_rules
-    - backtest_trading_signals
+    nodes_dependent_on: []
+    output_structure:
+    - description: Identifiers for each liquidity control rule
+      key: rule_names
+      type: List[str]
+    - description: Depth‑of‑book thresholds (e.g., minimum available volume) for each
+        rule
+      key: depth_thresholds
+      type: List[float]
+    - description: Volatility levels (e.g., standard deviation of recent price changes)
+        that trigger the rule
+      key: volatility_thresholds
+      type: List[float]
+    - description: Time‑of‑day regimes (e.g., "09:30-11:00", "15:00-16:00") applicable
+        to each rule
+      key: time_of_day_windows
+      type: List[str]
+    - description: Order execution type for each rule (e.g., "market", "limit")
+      key: order_type
+      type: List[str]
+    - description: Whether batch execution is enabled for each rule
+      key: batch_execution_flags
+      type: List[bool]
+    - description: Human‑readable description of each liquidity control rule
+      key: rule_descriptions
+      type: List[str]
     prompt: Formulate rules that adjust trade size based on depth-of-book, volatility,
       and time-of-day regimes. Include explicit threshold values for switching between
       market/limit orders and batch execution.
@@ -107,9 +313,30 @@ nodes:
     description: Establish quantitative strategy architecture
     name: define_strategy_framework
     nodes_depended_on: []
-    nodes_dependent_on:
-    - build_signal_generation_model
-    - create_liquidity_control_rules
+    nodes_dependent_on: []
+    output_structure:
+    - description: High-level category of the strategy (e.g., statistical arbitrage,
+        trend following, mean reversion)
+      key: strategy_type
+      type: str
+    - description: 3-5 concise bullet points that capture the core attributes of the
+        strategy
+      key: defining_characteristics
+      type: List[str]
+    - description: Brief description of how trading signals are generated within the
+        framework
+      key: signal_generation_methodology
+      type: str
+    - description: Summary of the position sizing rules and risk allocation logic
+      key: position_sizing_approach
+      type: str
+    - description: Overview of order execution tactics, including order types and
+        routing preferences
+      key: execution_protocols
+      type: str
+    - description: Full 250-word description combining all elements of the framework
+      key: framework_summary
+      type: str
     prompt: Formulate a quantitative framework specifying strategy type (stat arb,
       trend following, etc.), signal generation methodology, position sizing, and
       execution protocols. Limit description to 250 words with 3-5 defining characteristics.
@@ -120,9 +347,36 @@ nodes:
     nodes_depended_on:
     - calculate_statistical_metrics
     - create_liquidity_control_rules
-    nodes_dependent_on:
-    - backtest_trading_signals
-    - build_signal_generation_model
+    nodes_dependent_on: []
+    output_structure:
+    - description: High‑level description of the position sizing methodology in natural
+        language
+      key: position_sizing_algorithm
+      type: str
+    - description: List of explicit rule expressions or formulas used to compute position
+        size
+      key: sizing_rules
+      type: List[str]
+    - description: Multiplier applied to base risk based on realized volatility
+      key: volatility_multiplier
+      type: float
+    - description: Factor that scales position size according to liquidity conditions
+        (e.g., depth‑of‑book, spread)
+      key: liquidity_adjustment_factor
+      type: float
+    - description: Minimum signal confidence level required to take a position
+      key: confidence_threshold
+      type: float
+    - description: Maximum allowed Value‑at‑Risk (VaR) expressed as a percentage of
+        portfolio equity
+      key: var_constraint
+      type: float
+    - description: Margin requirement per contract as a percentage of notional exposure
+      key: margin_requirement
+      type: float
+    - description: Additional remarks, assumptions, or implementation considerations
+      key: notes
+      type: str
     prompt: Design position sizing algorithm that adjusts risk exposure based on realized
       volatility, liquidity conditions, and confidence level in signals. Include VaR
       constraints and margin requirements.
@@ -133,9 +387,26 @@ nodes:
     nodes_depended_on:
     - process_historical_data
     - identify_risk_factors
-    nodes_dependent_on:
-    - build_signal_generation_model
-    - model_regression_based_strategy
+    nodes_dependent_on: []
+    output_structure:
+    - description: List of generated feature names (e.g., "rsi_14", "macd_hist", "vol_surface_30d")
+      key: feature_names
+      type: List[str]
+    - description: Brief description of each feature corresponding to the order in
+        feature_names
+      key: feature_descriptions
+      type: List[str]
+    - description: Numerical importance scores for each feature as derived from ranking
+        techniques (higher = more predictive)
+      key: feature_importance_scores
+      type: List[float]
+    - description: Subset of feature_names that are identified as the strongest candidates
+        based on importance scores
+      key: selected_feature_names
+      type: List[str]
+    - description: Importance scores corresponding to the selected_feature_names
+      key: selected_feature_importance
+      type: List[float]
     prompt: 'Generate 20-30 predictive features including: technical indicators (RSI,
       MACD), volatility surfaces, momentum factors, liquidity ratios, and macroeconomic
       spreads. Apply feature ranking techniques to identify strongest candidates.'
@@ -144,8 +415,16 @@ nodes:
     description: Determine macroeconomic and market risk factors affecting futures
     name: identify_risk_factors
     nodes_depended_on: []
-    nodes_dependent_on:
-    - feature_engineering
+    nodes_dependent_on: []
+    output_structure:
+    - description: List of identified risk factor names (e.g., "Interest Rates", "Crude
+        Oil Prices")
+      key: risk_factors
+      type: List[str]
+    - description: Parallel list indicating the category for each risk factor in risk_factors;
+        each entry is one of "price driver", "volatility factor", or "liquidity risk"
+      key: risk_factor_categories
+      type: List[str]
     prompt: List 8-12 relevant risk factors for futures trading (e.g., interest rates,
       commodity prices, macroeconomic indicators). Categorize each as either price
       drivers, volatility factors, or liquidity risks.
@@ -157,8 +436,34 @@ nodes:
     - calculate_statistical_metrics
     - feature_engineering
     - analyze_market_structure
-    nodes_dependent_on:
-    - backtest_trading_signals
+    nodes_dependent_on: []
+    output_structure:
+    - description: Names or identifiers for each regression model generated
+      key: model_names
+      type: List[str]
+    - description: Brief textual description of each model, including regularization
+        method used
+      key: model_descriptions
+      type: List[str]
+    - description: Out-of-sample performance metric (e.g., R² or information ratio)
+        for each model
+      key: model_performance
+      type: List[float]
+    - description: Zero‑based index of the model chosen as best performing
+      key: selected_model_index
+      type: int
+    - description: List of coefficient values for the selected model, ordered to match
+        the feature list
+      key: selected_model_coefficients
+      type: List[float]
+    - description: Names of the features corresponding to each coefficient in the
+        selected model
+      key: selected_model_coefficient_names
+      type: List[str]
+    - description: Boolean flags indicating whether each coefficient in the selected
+        model is statistically significant
+      key: selected_model_significant
+      type: List[bool]
     prompt: Develop 3-5 regression-based models using feature set to predict price
       movements. Apply regularization techniques and select best-performing model
       based on out-of-sample validation. Document coefficient significance.
@@ -168,11 +473,30 @@ nodes:
     name: optimize_model_parameters
     nodes_depended_on:
     - backtest_trading_signals
-    nodes_dependent_on:
-    - validate_overfitting_risk
-    - calculate_performance_metrics
-    prompt: Optimize signal generation and position sizing parameters using cross-validation.
-      Document optimal parameter ranges that pass out-of-sample tests. Focus on walk-forward
+    nodes_dependent_on: []
+    output_structure:
+    - description: List of signal generation parameter settings in "param=value" format
+        that achieved the best cross‑validation performance
+      key: optimal_signal_parameters
+      type: List[str]
+    - description: List of position sizing parameter settings in "param=value" format
+        derived from the optimization
+      key: optimal_position_sizing_parameters
+      type: List[str]
+    - description: Aggregate performance metric (e.g., average Sharpe ratio) obtained
+        during cross‑validation for the selected parameters
+      key: cross_validation_score
+      type: float
+    - description: Indicates whether the optimized parameters maintained performance
+        across walk‑forward windows
+      key: walk_forward_consistency
+      type: bool
+    - description: Markdown‑formatted text summarizing the acceptable ranges for each
+        tuned hyperparameter
+      key: parameter_ranges_documentation
+      type: str
+    prompt: Optimize signal generation and position sizing parameters using cross‑validation.
+      Document optimal parameter ranges that pass out‑of‑sample tests. Focus on walk‑forward
       performance consistency.
   process_historical_data:
     agent: false
@@ -180,9 +504,29 @@ nodes:
     name: process_historical_data
     nodes_depended_on:
     - collect_historical_future_data
-    nodes_dependent_on:
-    - calculate_statistical_metrics
-    - feature_engineering
+    nodes_dependent_on: []
+    output_structure:
+    - description: CSV formatted string of the cleaned dataset, including header row
+        with columns such as timestamp, open, high, low, close, volume, open_interest
+      key: cleaned_data_csv
+      type: str
+    - description: Number of rows/records in the cleaned dataset
+      key: record_count
+      type: int
+    - description: ISO8601 timestamp of the first record in the cleaned dataset
+      key: start_timestamp
+      type: str
+    - description: ISO8601 timestamp of the last record in the cleaned dataset
+      key: end_timestamp
+      type: str
+    - description: Uniform time interval in minutes between consecutive records in
+        the cleaned dataset
+      key: time_interval_minutes
+      type: int
+    - description: Indicates whether the cleaning and normalization process completed
+        without errors
+      key: is_successful
+      type: bool
     prompt: 'Clean raw futures data by: 1) Handling missing timestamps, 2) Adjusting
       for contract rollover, 3) Calculating continuous price series, 4) Normalizing
       volumes. Output cleaned dataset with consistent time intervals.'
@@ -192,8 +536,28 @@ nodes:
     name: validate_overfitting_risk
     nodes_depended_on:
     - optimize_model_parameters
-    nodes_dependent_on:
-    - calculate_performance_metrics
+    nodes_dependent_on: []
+    output_structure:
+    - description: Names of market regimes used in the stress test (e.g., bull, bear,
+        high-volatility).
+      key: tested_regimes
+      type: List[str]
+    - description: Quantitative measure of backtesting performance degradation for
+        each regime (e.g., drop in Sharpe ratio).
+      key: degradation_scores
+      type: List[float]
+    - description: String representations of parameter ranges that led to significant
+        performance drops in each regime.
+      key: affected_parameter_ranges
+      type: List[str]
+    - description: Brief textual summary indicating overall model robustness and any
+        regimes of concern.
+      key: robustness_summary
+      type: str
+    - description: Flag indicating whether the model passes a predefined robustness
+        criterion across all tested regimes.
+      key: is_robust
+      type: bool
     prompt: Stress-test optimized parameters using 5+ different market regimes (bull,
       bear, high-volatility, etc.). Identify parameter ranges that produced meaningful
       backtesting degradation.
