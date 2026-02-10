@@ -1,7 +1,5 @@
 dag_type: plain_text
-description: A workflow for establishing a hedge fund, including strategic, operational,
-  and investment considerations, with an additional step to evaluate quantum computing
-  startup investments.
+description: Generated workflow from UI with parallel risk control design steps.
 name: build_hedge_fund_workflow
 nodes:
   choose_investment_strategy:
@@ -12,9 +10,9 @@ nodes:
     nodes_depended_on:
     - define_hedge_fund_objectives
     nodes_dependent_on:
-    - define_fee_structure
     - select_asset_universe
     - develop_trading_strategy
+    - define_fee_structure
     prompt: Choose a hedge fund investment strategy (e.g., long/short equity, global
       macro) that aligns with the fund objectives and articulate the rationale in
       2-3 paragraphs.
@@ -47,8 +45,9 @@ nodes:
     nodes_depended_on: []
     nodes_dependent_on:
     - choose_investment_strategy
-    - select_jurisdiction
+    - define_fee_structure
     - invest_in_quantum_startups
+    - select_jurisdiction
     prompt: Describe the core objectives of the hedge fund in 5 bullet points, including
       return expectations, risk tolerance, and asset allocation.
   define_launch_blueprint:
@@ -74,18 +73,17 @@ nodes:
     prompt: Identify key metrics or benchmarks (e.g., position limits, VaR limits,
       Sharpe ratio) to measure risk performance across the hedge fund operations and
       outline how these metrics align with the fund objectives in 1-2 paragraphs.
-  design_risk_controls:
+  design_quantitative_controls:
     agent: false
-    description: Describe the fundamental risk controls aligned with the selected
-      hedge fund strategy.
-    name: design_risk_controls
+    description: Define quantitative risk controls including stop-loss and volatility
+      rules.
+    name: design_quantitative_controls
     nodes_depended_on:
     - select_asset_universe
     nodes_dependent_on: []
-    prompt: Identify one or more fundamental risk controls (e.g., stop-loss rules,
-      liquidity thresholds) to protect the hedge fund from potential losses. Specify
-      how these controls fit within the fund's chosen strategy and risk framework
-      in 1-2 paragraphs.
+    prompt: Identify quantitative risk control mechanisms (e.g., stop-loss rules,
+      volatility-based position limits) to manage market risk. Explain how these controls
+      align with the fund's strategy and asset universe in 1-2 paragraphs.
   develop_trading_strategy:
     agent: false
     description: Deliver a trading approach that serves the hedge fund's investment
@@ -94,13 +92,33 @@ nodes:
     nodes_depended_on:
     - choose_investment_strategy
     nodes_dependent_on:
-    - integrate_market_data
     - compile_trading_policy
+    - integrate_market_data
     prompt: Specify the fundamental trading approach that aligns with the hedge fund
       strategy, including decision-making processes, decision triggers, and rules
       for adjusting trading size. Address how this trading strategy will adapt in
       response to market conditions and maintain alignment with the fund objectives.
       Provide 1-2 paragraphs of guidance.
+  establish_liquidity_controls:
+    agent: false
+    description: Create liquidity risk controls for the fund's operations.
+    name: establish_liquidity_controls
+    nodes_depended_on:
+    - select_asset_universe
+    nodes_dependent_on: []
+    prompt: Design liquidity risk controls (e.g., liquidity thresholds, redemption
+      schedules) to manage cash flow requirements. Specify how these controls address
+      the asset universe's liquidity characteristics in 1-2 paragraphs.
+  implement_compliance_controls:
+    agent: false
+    description: Develop regulatory compliance and operational risk controls.
+    name: implement_compliance_controls
+    nodes_depended_on:
+    - select_asset_universe
+    nodes_dependent_on: []
+    prompt: Create compliance risk controls (e.g., transaction monitoring, regulatory
+      reporting) to ensure operational soundness. Describe how these controls address
+      risks associated with the selected asset universe in 1-2 paragraphs.
   integrate_market_data:
     agent: false
     description: Assess market information and adjust trading strategy accordingly.
@@ -131,8 +149,9 @@ nodes:
     - choose_investment_strategy
     nodes_dependent_on:
     - define_risk_management_framework
-    - design_risk_controls
-    - integrate_market_data
+    - design_quantitative_controls
+    - establish_liquidity_controls
+    - implement_compliance_controls
     prompt: Identify one or more specific asset classes (e.g., US large-cap equities)
       and instruments (e.g., S&P futures) that fit within the selected investment
       strategy. Clarify how these assets align with the fund objectives and risk profile
