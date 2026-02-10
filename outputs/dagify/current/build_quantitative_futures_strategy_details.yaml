@@ -1,4 +1,4 @@
-dag_type: typed
+dag_type: spec
 description: Generated workflow from UI.
 name: build_quantitative_futures_strategy
 nodes:
@@ -35,12 +35,61 @@ nodes:
         key regimes and actionable insights.
       key: summary_report
       type: str
+    prd:
+      conceptual_info: This node consumes cleaned order‑book and price series (produced
+        by `process_historical_data`) together with high‑level statistical descriptors
+        of returns (produced by `calculate_statistical_metrics`). It quantifies how
+        market depth and liquidity evolve across time, derives participation‑rate,
+        slippage and latency‑sensitivity profiles, discovers recurring day‑of‑week
+        and intraday patterns, and finally synthesizes a concise narrative that can
+        be consumed by downstream signal‑generation and liquidity‑control modules.
+      docstring:
+        examples:
+        - lines:
+          - cleaned_csv = "timestamp,open,high,low,close,volume,open_interest\n2023-01-01
+            09:30,100,101,99,100.5,5000,2000"
+          - 'stats = {"contract_series": ["CL_F2023"], "daily_return_std": [0.015]}'
+          - result = analyze_market_structure(cleaned_csv, stats)
+          - result['summary_report']
+          output: '"The market exhibits high participation during morning sessions
+            with low slippage, but latency sensitivity rises sharply after 14:00 UTC.
+            Monday shows consistently high depth, while the 09:30‑11:30 window is
+            the most liquid."'
+        - lines:
+          - cleaned_csv = "timestamp,open,high,low,close,volume,open_interest\n2023-01-02
+            10:00,200,202,198,201,8000,3000"
+          - 'stats = {"contract_series": ["GC_F2023"], "daily_return_std": [0.02]}'
+          - result = analyze_market_structure(cleaned_csv, stats)
+          - result['participation_rates']
+          output: '[0.12, 0.15, 0.09, 0.11]'
+        parameters:
+        - description: CSV string from `process_historical_data` containing timestamped
+            OHLCV and open‑interest data.
+          name: cleaned_data_csv
+          type: str
+        - description: Dictionary from `calculate_statistical_metrics` containing
+            return moments and volatility‑clustering metrics for each contract series.
+          name: statistical_metrics
+          type: dict
+        raises:
+        - description: If `cleaned_data_csv` is empty or malformed.
+          type: ValueError
+        - description: If required fields are missing from `statistical_metrics`.
+          type: KeyError
+        returns:
+          description: 'Dictionary with keys matching the node''s output_structure:
+            participation_rates, slippage_estimates, latency_sensitivity, day_of_week_patterns,
+            time_of_day_patterns, and summary_report.'
+          type: dict
+        summary: Analyze market depth and liquidity regimes to produce participation,
+          slippage, latency, and pattern insights.
     prompt: Analyze order book dynamics and liquidity regimes by calculating participation
       rates, slippage estimates, and latency sensitivity. Identify day/time-of-week
       patterns in market depth.
   backtest_trading_signals:
     agent: false
-    description: Validate strategy performance on historical data
+    description: Validate strategy performance on historical data using walk‑forward
+      analysis with 12‑month rolling windows and report key performance metrics.
     name: backtest_trading_signals
     nodes_depended_on:
     - build_signal_generation_model
@@ -64,12 +113,45 @@ nodes:
         event
       key: drawdown_duration_profile
       type: List[int]
+    prd:
+      conceptual_info: Executes a walk‑forward backtest of the generated trading signals,
+        applying the signal model, regression‑based forecasts, and liquidity control
+        rules across successive 12‑month windows. It aggregates portfolio equity over
+        time and computes standard risk‑adjusted performance statistics.
+      docstring:
+        examples:
+        - lines:
+          - results = backtest_trading_signals()
+          output: "{\n  'equity_curve': [100000.0, 101200.5, 102450.3, ...],\n  'sharpe_ratio':\
+            \ 1.45,\n  'max_drawdown': -0.12,\n  'annualized_return': 0.18,\n  'drawdown_duration_profile':\
+            \ [5, 12, 7]\n}"
+        - lines:
+          - 'print(f"Annualized Return: {results[''annualized_return'']:.2%}")'
+          output: 'Annualized Return: 18.00%'
+        parameters: []
+        raises:
+        - description: If any of the dependent nodes fail to produce required inputs
+            (e.g., missing model pseudocode or liquidity rules).
+          type: ValueError
+        - description: If the backtest simulation encounters an unexpected error such
+            as data misalignment or division by zero.
+          type: RuntimeError
+        returns:
+          description: Dictionary containing `equity_curve`, `sharpe_ratio`, `max_drawdown`,
+            `annualized_return`, and `drawdown_duration_profile` as defined in the
+            output structure.
+          type: dict
+        summary: Run a 12‑month rolling walk‑forward backtest of the strategy and
+          return key performance metrics.
     prompt: 'Backtest trading signals using walk-forward analysis with 12mo rolling
       windows. Report: equity curve, sharpe ratio, max DD, annualized return, drawdown
       duration profile.'
   build_signal_generation_model:
     agent: false
-    description: Develop core trading signal generation mechanism
+    description: Develop core trading signal generation mechanism by integrating selected
+      predictive features, strategy framework specifications, and market structure
+      insights into a weighted scoring model with explicit entry/exit thresholds and
+      position sizing parameters.
     name: build_signal_generation_model
     nodes_depended_on:
     - feature_engineering
@@ -100,6 +182,43 @@ nodes:
         factor, max exposure) used within the model.
       key: position_sizing_parameters
       type: List[float]
+    prd:
+      conceptual_info: This node synthesizes the selected predictive features, the
+        high‑level strategy framework, and market‑structure characteristics into a
+        deterministic signal generation model. The model assigns weights to each feature,
+        computes a composite score, and compares it against configurable entry and
+        exit thresholds. The resulting pseudocode, together with the explicit parameter
+        lists, serves as the core logic for downstream backtesting and execution modules.
+      docstring:
+        examples:
+        - lines:
+          - model = build_signal_generation_model()
+          - print(model["feature_names"])
+          - print(model["entry_thresholds"])
+          output: '["rsi_14", "macd_hist", "vol_surface_30d"]\n[0.6, -0.3]'
+        - lines:
+          - model = build_signal_generation_model()
+          - print(model["model_pseudocode"])
+          output: \"\"\"# Pseudocode\\nscore = 0.0\\nfor f, w in zip(feature_names,
+            feature_weights):\\n    score += w * get_feature(f)\\nif score > entry_thresholds[0]:\\n    signal
+            = 'LONG'\\nelif score < exit_thresholds[0]:\\n    signal = 'SHORT'\\nelse:\\n    signal
+            = 'HOLD'\\n# Position sizing\\nsize = base_notional * position_sizing_parameters[0]\\n\"\"\""
+        parameters: []
+        raises:
+        - description: If the parent nodes do not provide matching lengths for feature_names
+            and feature_weights.
+          type: ValueError
+        - description: If required inputs from any parent node are missing or malformed.
+          type: RuntimeError
+        returns:
+          description: "A dictionary containing the model pseudocode and all parameter\
+            \ arrays:\n{\n    \"model_pseudocode\": str,\n    \"feature_names\": List[str],\n\
+            \    \"feature_weights\": List[float],\n    \"entry_thresholds\": List[float],\n\
+            \    \"exit_thresholds\": List[float],\n    \"position_sizing_parameters\"\
+            : List[float]\n}"
+          type: dict
+        summary: Constructs a weighted signal generation model using feature engineering
+          output, strategy framework definitions, and market structure analysis.
     prompt: Implement a signal generation model using selected features and strategy
       framework. Create explicit weighting/floating thresholds for entry/exit decisions.
       Format as pseudocode with parameter definitions.
@@ -158,12 +277,67 @@ nodes:
         to recover 50% of max drawdown)
       key: optimized_drawdown_recovery_speed
       type: float
+    prd:
+      conceptual_info: This node ingests the backtested equity curve and trade‑level
+        details for the baseline strategy as well as the optimized parameter set,
+        computes a comprehensive suite of performance metrics for each, and returns
+        a paired comparison. The metrics span return, risk‑adjusted ratios, trade
+        success, holding characteristics, and drawdown recovery, enabling downstream
+        documentation and decision‑making.
+      docstring:
+        examples:
+        - lines:
+          - baseline = {
+          - '    ''equity_curve'': [100, 102, 105, 103],'
+          - '    ''sharpe_ratio'': 1.2,'
+          - '    ''max_drawdown'': -0.04,'
+          - '    ''annualized_return'': 0.15,'
+          - '    ''drawdown_duration_profile'': [2, 3]'
+          - '}'
+          - 'optimized_params = {''optimal_signal_parameters'': [''threshold=0.6''],
+            ''optimal_position_sizing_parameters'': [''vol_factor=1.1'']}'
+          - metrics = calculate_performance_metrics(baseline, optimized_params)
+          output: "{\n  'baseline_annualized_return': 0.15,\n  'optimized_annualized_return':\
+            \ 0.18,\n  'baseline_sharpe_ratio': 1.2,\n  'optimized_sharpe_ratio':\
+            \ 1.35,\n  'baseline_sortino_ratio': 1.5,\n  'optimized_sortino_ratio':\
+            \ 1.7,\n  'baseline_calmar_ratio': 3.75,\n  'optimized_calmar_ratio':\
+            \ 4.2,\n  'baseline_win_rate': 0.55,\n  'optimized_win_rate': 0.62,\n\
+            \  'baseline_avg_holding_period': 4.2,\n  'optimized_avg_holding_period':\
+            \ 3.9,\n  'baseline_drawdown_recovery_speed': 5.0,\n  'optimized_drawdown_recovery_speed':\
+            \ 4.2\n}"
+        parameters:
+        - description: 'Dictionary output from `backtest_trading_signals` for the
+            baseline model containing keys: ''equity_curve'' (list[float]), ''sharpe_ratio''
+            (float), ''max_drawdown'' (float), ''annualized_return'' (float), ''drawdown_duration_profile''
+            (list[int]).'
+          name: baseline_backtest
+          type: dict
+        - description: Dictionary output from `optimize_model_parameters` containing
+            the optimized parameter settings. Used to re‑run backtest internally for
+            the optimized model.
+          name: optimized_params
+          type: dict
+        raises:
+        - description: If required keys are missing from inputs or if the equity curve
+            lengths are inconsistent.
+          type: ValueError
+        - description: If the optimized backtest fails to produce a valid equity curve.
+          type: RuntimeError
+        returns:
+          description: Dictionary with the keys defined in the node's output_structure,
+            each mapping to a float metric for baseline and optimized models.
+          type: dict
+        summary: Compute detailed performance metrics for baseline and optimized trading
+          models.
     prompt: 'Calculate: annualized return, sharpe ratio, sortino ratio, calmar ratio,
       win rate, average holding period, and drawdown recovery speed for both baseline
       and optimized models.'
   calculate_statistical_metrics:
     agent: false
-    description: Compute key statistical properties of returns distribution
+    description: Compute key statistical properties of returns distribution for each
+      futures contract series, including daily/weekly/monthly return moments, volatility
+      clustering, and non‑normality measures, and produce a time‑weighted human‑readable
+      summary.
     name: calculate_statistical_metrics
     nodes_depended_on:
     - process_historical_data
@@ -203,9 +377,53 @@ nodes:
         observation time
       key: time_weighted_summary
       type: str
+    prd:
+      conceptual_info: This node transforms cleaned historical futures price data
+        into a comprehensive statistical portrait of each contract series. By aggregating
+        returns at daily, weekly, and monthly horizons and evaluating higher‑order
+        moments and volatility clustering, it supplies downstream components (market‑structure
+        analysis, position sizing, and regression models) with robust descriptors
+        of return behavior that are essential for risk assessment and signal generation.
+      docstring:
+        examples:
+        - lines:
+          - csv_data = ("timestamp,open,high,low,close,volume,open_interest\n"
+          - '            "2023-01-01 09:30,100,101,99,100.5,2000,10\n"'
+          - '            "2023-01-02 09:30,100.5,102,100,101,2100,11")'
+          - metrics = calculate_statistical_metrics(csv_data)
+          output: "{\n  'contract_series': ['CL_FUT'],\n  'daily_return_mean': [0.005],\n\
+            \  'daily_return_std': [0.0012],\n  'weekly_return_mean': [0.032],\n \
+            \ 'weekly_return_std': [0.005],\n  'monthly_return_mean': [0.128],\n \
+            \ 'monthly_return_std': [0.020],\n  'volatility_clustering_metric': [1.45],\n\
+            \  'skewness': [0.12],\n  'kurtosis': [3.4],\n  'time_weighted_summary':\
+            \ 'Daily mean 0.5 %, weekly mean 3.2 %, monthly mean 12.8 %, volatility\
+            \ clustering 1.45, skew 0.12, kurtosis 3.4.'\n}"
+        - lines:
+          - '# Missing required column triggers an error'
+          - bad_csv = "timestamp,open,high,low,volume,open_interest\n2023-01-01 09:30,100,101,99,2000,10"
+          - calculate_statistical_metrics(bad_csv)
+          output: 'ValueError: CSV must contain a ''close'' column.'
+        parameters:
+        - description: 'CSV‑formatted string produced by `process_historical_data`,
+            containing columns: timestamp, open, high, low, close, volume, open_interest.'
+          name: cleaned_data_csv
+          type: str
+        raises:
+        - description: If the CSV cannot be parsed, lacks required columns, or contains
+            insufficient data for a given contract series.
+          type: ValueError
+        - description: If numerical computations (e.g., division by zero in volatility
+            clustering) fail.
+          type: RuntimeError
+        returns:
+          description: Dictionary with keys matching the node's output_structure,
+            each holding the computed metric list or summary string.
+          type: dict
+        summary: Calculate statistical return metrics for multiple futures contract
+          series from cleaned price data.
     prompt: Calculate daily/weekly/monthly return distributions, volatility clustering
-      metrics, and non-normality measures (skew, kurtosis) for each futures contract
-      series. Present as time-weighted summary statistics.
+      metrics, and non‑normality measures (skew, kurtosis) for each futures contract
+      series. Present as time‑weighted summary statistics.
   collect_historical_future_data:
     agent: false
     description: Retrieve historical futures price data for targeted contracts
@@ -233,12 +451,58 @@ nodes:
     - description: Total number of data rows collected (excluding header)
       key: row_count
       type: int
+    prd:
+      conceptual_info: This node gathers extensive historical price and volume information
+        for a set of futures contracts spanning at least five years. The raw data
+        is organized into CSV rows, each timestamped and annotated with contract month,
+        enabling downstream cleaning, analysis, and strategy development.
+      docstring:
+        examples:
+        - lines:
+          - result = collect_historical_future_data()
+          output: "{\n    'csv_rows': [\n        '2020-01-02 09:30:00,CLM2020,71.45,71.60,71.30,71.55,12000,50000',\n\
+            \        '2020-01-02 09:31:00,CLM2020,71.55,71.70,71.40,71.65,11500,50500',\n\
+            \        ...\n    ],\n    'contracts': ['CLM2020', 'CLU2020', 'CLZ2021'],\n\
+            \    'start_date': '2015-01-02',\n    'end_date': '2023-12-31',\n    'row_count':\
+            \ 1056000\n}"
+        - lines:
+          - len(result['csv_rows'])
+          - result['row_count']
+          output: '1056000
+
+            1056000'
+        parameters: []
+        raises:
+        - description: If the data provider service cannot be reached.
+          type: ConnectionError
+        - description: If no contracts satisfy the 5‑year data requirement.
+          type: ValueError
+        - description: If the retrieved data cannot be parsed into the expected CSV
+            schema.
+          type: RuntimeError
+        returns:
+          description: 'Dictionary containing:
+
+            - **csv_rows** (List[str]): CSV rows with fields timestamp, contract_month,
+            open, high, low, close, volume, open_interest.
+
+            - **contracts** (List[str]): Identifiers of the contracts included.
+
+            - **start_date** (str): ISO‑8601 start date of the dataset.
+
+            - **end_date** (str): ISO‑8601 end date of the dataset.
+
+            - **row_count** (int): Number of data rows (excluding header).'
+          type: dict
+        summary: Collects multi‑year historical futures price, volume, and open‑interest
+          data and returns it in a structured CSV format.
     prompt: Identify and collect 5+ years of historical futures data including open/high/low/close
       prices, volumes, and open interest for multiple contract months. Format as CSV
       with timestamped rows.
   compile_strategy_documentation:
     agent: false
-    description: Produce complete strategy specification document
+    description: Produce a comprehensive strategy specification document by synthesizing
+      the framework definition and performance metrics into human‑readable sections.
     name: compile_strategy_documentation
     nodes_depended_on:
     - calculate_performance_metrics
@@ -269,12 +533,47 @@ nodes:
         to run the strategy
       key: system_requirements
       type: str
+    prd:
+      conceptual_info: This node consolidates the quantitative strategy framework
+        and the quantitative performance analysis into a single, structured documentation
+        artifact that can be shared with stakeholders, compliance, and development
+        teams.
+      docstring:
+        examples:
+        - lines:
+          - doc = compile_strategy_documentation()
+          - print(doc['investment_thesis'])
+          - print(doc['performance_summary_table'])
+          output: A concise 200‑word investment thesis describing the market inefficiency
+            the strategy exploits...\n| Metric                | Baseline | Optimized
+            |\n|----------------------|----------|-----------|\n| Annualized Return    |
+            0.12     | 0.18      |\n| Sharpe Ratio         | 1.4      | 2.1       |\n|
+            Max Drawdown         | -0.08    | -0.05     |
+        - lines:
+          - doc = compile_strategy_documentation()
+          - assert isinstance(doc['signal_generation_flowchart'], str)
+          - assert doc['system_requirements'].startswith('Hardware')
+          output: 'True'
+        parameters: []
+        raises:
+        - description: If required fields from parent nodes are missing.
+          type: KeyError
+        - description: If any generated section exceeds its length or formatting constraints.
+          type: ValueError
+        returns:
+          description: A dictionary containing the six documentation sections defined
+            in the output_structure.
+          type: dict
+        summary: Generate a full strategy documentation package from framework and
+          performance data.
     prompt: 'Document the quantitative strategy with: 1) Investment thesis (200 words),
       2) Signal generation methodology (flowchart), 3) Risk controls (rules table),
       4) Parameter ranges, 5) Performance summary (table), 6) System requirements.'
   create_liquidity_control_rules:
     agent: false
-    description: Develop adaptive liquidity management protocols
+    description: Develop adaptive liquidity management protocols that adjust trade
+      size, order type, and batch execution based on order‑book depth, market volatility,
+      and time‑of‑day regimes.
     name: create_liquidity_control_rules
     nodes_depended_on:
     - define_strategy_framework
@@ -305,6 +604,46 @@ nodes:
     - description: Human‑readable description of each liquidity control rule
       key: rule_descriptions
       type: List[str]
+    prd:
+      conceptual_info: This node translates the high‑level strategy framework and
+        market‑structure analysis into concrete liquidity‑control rules. Each rule
+        specifies when to use market vs. limit orders, whether to batch trades, and
+        the depth/volatility thresholds that trigger the rule, enabling the execution
+        engine to adapt to changing market conditions.
+      docstring:
+        examples:
+        - lines:
+          - rules = create_liquidity_control_rules()
+          - rules['rule_names']
+          - rules['order_type']
+          output: '["high_liquidity_market", "low_volatility_limit"]\n["market", "limit"]'
+        - lines:
+          - '# Inspect the first rule'
+          - print({
+          - '    "name": rules[''rule_names''][0],'
+          - '    "depth_thr": rules[''depth_thresholds''][0],'
+          - '    "vol_thr": rules[''volatility_thresholds''][0],'
+          - '    "time_window": rules[''time_of_day_windows''][0],'
+          - '    "order": rules[''order_type''][0],'
+          - '    "batch": rules[''batch_execution_flags''][0],'
+          - '    "desc": rules[''rule_descriptions''][0]'
+          - '})'
+          output: '{''name'': ''high_liquidity_market'', ''depth_thr'': 50000.0, ''vol_thr'':
+            0.02, ''time_window'': ''09:30-11:00'', ''order'': ''market'', ''batch'':
+            True, ''desc'': ''Use market orders and batch execution when depth exceeds
+            50k contracts and volatility is below 2% during the opening session.''}'
+        parameters: []
+        raises:
+        - description: If the derived rule lists have mismatched lengths or contain
+            invalid values (e.g., negative thresholds, unsupported order types).
+          type: ValueError
+        returns:
+          description: Dictionary containing seven parallel lists (rule_names, depth_thresholds,
+            volatility_thresholds, time_of_day_windows, order_type, batch_execution_flags,
+            rule_descriptions) where each index defines a complete rule.
+          type: dict
+        summary: Generate a list of adaptive liquidity‑control rules based on strategy
+          specifications and market‑structure insights.
     prompt: Formulate rules that adjust trade size based on depth-of-book, volatility,
       and time-of-day regimes. Include explicit threshold values for switching between
       market/limit orders and batch execution.
@@ -337,6 +676,65 @@ nodes:
     - description: Full 250-word description combining all elements of the framework
       key: framework_summary
       type: str
+    prd:
+      conceptual_info: This node synthesizes the high‑level design of a quantitative
+        futures strategy. It selects the strategic category, outlines the core traits,
+        describes how signals are derived, defines risk‑aware position sizing, and
+        specifies execution tactics. The resulting framework serves as the blueprint
+        for downstream components such as signal‑generation models, liquidity controls,
+        and the final strategy documentation.
+      docstring:
+        examples:
+        - lines:
+          - framework = define_strategy_framework()
+          - print(framework['strategy_type'])
+          - print(framework['defining_characteristics'])
+          - 'print(framework[''framework_summary''][:60])  # first 60 chars'
+          output: 'statistical_arbitrage
+
+            [''Mean‑reversion of mispricings'', ''High‑frequency execution'', ''Risk‑scaled
+            exposure'']
+
+            ''Statistical arbitrage strategy that exploits short‑term price deviations
+            ...'''
+        - lines:
+          - framework = define_strategy_framework()
+          - 'for key, value in framework.items():'
+          - '    print(f"{key}: {value}")'
+          output: "strategy_type: statistical_arbitrage\n\"\n                    \
+            \    + \"defining_characteristics: ['Mean‑reversion of mispricings', 'High‑frequency\
+            \ execution', 'Risk‑scaled exposure']\n\"\n                        + \"\
+            signal_generation_methodology: Signals are generated by applying a linear\
+            \ regression model to a ranked set of liquidity‑adjusted features and\
+            \ triggering entry when the predicted residual exceeds a dynamic threshold.\n\
+            \"\n                        + \"position_sizing_approach: Position size\
+            \ is proportional to the inverse of recent realized volatility, capped\
+            \ by a VaR‑based max exposure and adjusted for available order‑book depth.\n\
+            \"\n                        + \"execution_protocols: Uses a hybrid market/limit\
+            \ order strategy routed through low‑latency gateways, with batch slicing\
+            \ during high‑impact windows.\n\"\n                        + \"framework_summary:\
+            \ Statistical arbitrage strategy that exploits short‑term price deviations\
+            \ across correlated futures contracts. Signals are derived from a regression‑based\
+            \ model that ingests liquidity‑adjusted features such as order‑book imbalance,\
+            \ recent price momentum, and macro‑factor spreads. Positions are sized\
+            \ using a volatility‑scaled multiplier, constrained by portfolio VaR limits\
+            \ and real‑time depth thresholds. Execution combines aggressive market\
+            \ orders for small, high‑confidence signals and passive limit orders with\
+            \ price‑time priority for larger exposures, routed through the nearest\
+            \ exchange gateway to minimize latency. The framework emphasizes tight\
+            \ risk controls, adaptive sizing, and robust back‑testing across multiple\
+            \ market regimes."
+        parameters: []
+        raises:
+        - description: If internal logic fails to produce any of the required output
+            fields.
+          type: RuntimeError
+        returns:
+          description: 'Dictionary containing six keys: strategy_type (str), defining_characteristics
+            (List[str]), signal_generation_methodology (str), position_sizing_approach
+            (str), execution_protocols (str), and framework_summary (str).'
+          type: dict
+        summary: Generate a complete quantitative strategy framework description.
     prompt: Formulate a quantitative framework specifying strategy type (stat arb,
       trend following, etc.), signal generation methodology, position sizing, and
       execution protocols. Limit description to 250 words with 3-5 defining characteristics.
@@ -377,6 +775,54 @@ nodes:
     - description: Additional remarks, assumptions, or implementation considerations
       key: notes
       type: str
+    prd:
+      conceptual_info: This node synthesizes statistical volatility metrics and liquidity
+        control rules to produce a comprehensive position‑sizing specification. The
+        resulting algorithm dynamically scales exposure based on realized volatility,
+        market liquidity, signal confidence, and risk limits such as VaR and margin
+        constraints, ensuring that each trade respects both market conditions and
+        portfolio risk appetite.
+      docstring:
+        examples:
+        - lines:
+          - stat_metrics = {
+          - '    ''volatility_clustering_metric'': [0.12, 0.15],'
+          - '    ''daily_return_std'': [0.008, 0.010]'
+          - '}'
+          - liq_rules = {
+          - '    ''depth_thresholds'': [1000, 2000],'
+          - '    ''volatility_thresholds'': [0.02, 0.03]'
+          - '}'
+          - result = design_position_sizing_rules(stat_metrics, liq_rules)
+          output: "{\n  'position_sizing_algorithm': 'Volatility‑adjusted, liquidity‑aware\
+            \ sizing with confidence and risk caps.',\n  'sizing_rules': [\n    'base_size\
+            \ = risk_cap / (volatility * volatility_multiplier)',\n    'size *= liquidity_adjustment_factor\
+            \ if depth >= depth_threshold',\n    \"size = 0 if signal_confidence <\
+            \ confidence_threshold\"\n  ],\n  'volatility_multiplier': 1.5,\n  'liquidity_adjustment_factor':\
+            \ 0.8,\n  'confidence_threshold': 0.7,\n  'var_constraint': 0.02,\n  'margin_requirement':\
+            \ 0.1,\n  'notes': 'Volatility multiplier derived from average daily_return_std;\
+            \ liquidity factor calibrated from depth thresholds.'\n}"
+        parameters:
+        - description: Dictionary returned by `calculate_statistical_metrics` containing
+            volatility and distribution statistics for each futures contract.
+          name: statistical_metrics
+          type: dict
+        - description: Dictionary returned by `create_liquidity_control_rules` describing
+            depth‑of‑book and volatility thresholds for trade‑size adjustments.
+          name: liquidity_rules
+          type: dict
+        raises:
+        - description: If required keys are missing from the input dictionaries.
+          type: KeyError
+        - description: If any input values are out of realistic bounds (e.g., negative
+            volatility).
+          type: ValueError
+        returns:
+          description: Dictionary matching the node's output_structure keys with the
+            computed values.
+          type: dict
+        summary: Generate a full position‑sizing specification using statistical metrics
+          and liquidity control rules.
     prompt: Design position sizing algorithm that adjusts risk exposure based on realized
       volatility, liquidity conditions, and confidence level in signals. Include VaR
       constraints and margin requirements.
@@ -407,6 +853,56 @@ nodes:
     - description: Importance scores corresponding to the selected_feature_names
       key: selected_feature_importance
       type: List[float]
+    prd:
+      conceptual_info: The feature_engineering node transforms cleaned historical
+        futures data and identified macro‑level risk factors into a rich set of quantitative
+        predictors. It synthesizes technical, volatility, momentum, liquidity, and
+        macro‑economic features, then ranks them using statistical importance metrics
+        to surface the most predictive variables for downstream modeling.
+      docstring:
+        examples:
+        - lines:
+          - cleaned_csv = "timestamp,open,high,low,close,volume,open_interest\n2023-01-01
+            09:30,100,101,99,100.5,5000,10\n2023-01-01 09:31,100.5,102,100,101,5200,10"
+          - risk_factors = ["Interest Rates", "Crude Oil Prices"]
+          - risk_factor_categories = ["price driver", "price driver"]
+          - features = feature_engineering(cleaned_csv, risk_factors, risk_factor_categories)
+          output: "{\n  'feature_names': ['rsi_14', 'macd_hist', 'vol_surface_30d',\
+            \ ...],\n  'feature_descriptions': ['14‑period Relative Strength Index',\
+            \ 'MACD histogram', '30‑day implied volatility surface', ...],\n  'feature_importance_scores':\
+            \ [0.12, 0.09, 0.15, ...],\n  'selected_feature_names': ['vol_surface_30d',\
+            \ 'rsi_14', 'macro_spread_interest_crude'],\n  'selected_feature_importance':\
+            \ [0.15, 0.12, 0.11]\n}"
+        - lines:
+          - '# When the input CSV is empty, the function raises an informative error'
+          - feature_engineering('', [], [])
+          output: 'ValueError: Input CSV is empty or missing required columns.'
+        parameters:
+        - description: CSV string containing the cleaned, uniformly‑spaced futures
+            price and volume series produced by `process_historical_data`.
+          name: cleaned_data_csv
+          type: str
+        - description: List of macro‑economic or market risk factor names identified
+            by `identify_risk_factors`.
+          name: risk_factors
+          type: List[str]
+        - description: Parallel list indicating each risk factor's category ("price
+            driver", "volatility factor", or "liquidity risk").
+          name: risk_factor_categories
+          type: List[str]
+        raises:
+        - description: If the CSV cannot be parsed or required columns are missing.
+          type: ValueError
+        - description: If feature ranking fails due to insufficient data or singular
+            matrix errors.
+          type: RuntimeError
+        returns:
+          description: Dictionary with keys `feature_names`, `feature_descriptions`,
+            `feature_importance_scores`, `selected_feature_names`, and `selected_feature_importance`
+            matching the node's output_structure.
+          type: dict
+        summary: Generate engineered predictive features from cleaned futures data
+          and macro risk factors, and rank them by predictive importance.
     prompt: 'Generate 20-30 predictive features including: technical indicators (RSI,
       MACD), volatility surfaces, momentum factors, liquidity ratios, and macroeconomic
       spreads. Apply feature ranking techniques to identify strongest candidates.'
@@ -425,12 +921,50 @@ nodes:
         each entry is one of "price driver", "volatility factor", or "liquidity risk"
       key: risk_factor_categories
       type: List[str]
+    prd:
+      conceptual_info: The node extracts a concise set of macro‑economic and market
+        variables that materially influence futures prices. By classifying each factor
+        as a price driver, volatility factor, or liquidity risk, downstream feature
+        engineering can incorporate appropriately weighted inputs for signal generation
+        and risk management.
+      docstring:
+        examples:
+        - lines:
+          - risk_factors, categories = identify_risk_factors()
+          output: "(['Interest Rates', 'Crude Oil Prices', 'USD/EUR Exchange Rate',\
+            \ 'VIX Index', 'Gold Spot Price', 'Eurodollar Futures', 'Natural Gas Futures',\
+            \ 'S&P 500 Futures'],\n ['price driver', 'price driver', 'price driver',\
+            \ 'volatility factor', 'price driver', 'liquidity risk', 'liquidity risk',\
+            \ 'price driver'])"
+        - lines:
+          - risk_factors, categories = identify_risk_factors()
+          - print(risk_factors[2])
+          - print(categories[2])
+          output: '"USD/EUR Exchange Rate"
+
+            "price driver"'
+        parameters: []
+        raises:
+        - description: If the underlying language model fails to produce a parsable
+            list of factors or categories.
+          type: RuntimeError
+        - description: If the lengths of the two returned lists differ.
+          type: ValueError
+        returns:
+          description: A tuple where the first element is a list of risk factor names
+            and the second element is a parallel list of categories ("price driver",
+            "volatility factor", or "liquidity risk").
+          type: Tuple[List[str], List[str]]
+        summary: Identify key risk factors for futures trading and classify each factor.
     prompt: List 8-12 relevant risk factors for futures trading (e.g., interest rates,
       commodity prices, macroeconomic indicators). Categorize each as either price
       drivers, volatility factors, or liquidity risks.
   model_regression_based_strategy:
     agent: false
-    description: Construct statistical arbitrage models for predictive signals
+    description: Construct statistical arbitrage models for predictive signals using
+      engineered features, market structure insights, and statistical metrics. Generates
+      multiple regularized regression models, evaluates out‑of‑sample performance,
+      and selects the best model with documented coefficient significance.
     name: model_regression_based_strategy
     nodes_depended_on:
     - calculate_statistical_metrics
@@ -464,6 +998,73 @@ nodes:
         model is statistically significant
       key: selected_model_significant
       type: List[bool]
+    prd:
+      conceptual_info: This node translates engineered predictive features, market‑structure
+        signals, and statistical return metrics into a suite of regularized regression
+        models that forecast future price movements. By evaluating each model on a
+        hold‑out dataset, it identifies the most robust predictor and provides full
+        coefficient details, enabling downstream signal generation and risk management
+        components.
+      docstring:
+        examples:
+        - lines:
+          - outputs = model_regression_based_strategy(
+          - '    features={'
+          - '        ''selected_feature_names'': [''rsi_14'', ''macd_hist'', ''vol_surface_30d''],'
+          - '        ''selected_feature_importance'': [0.8, 0.6, 0.4]'
+          - '    },'
+          - '    market_structure={'
+          - '        ''participation_rates'': [0.12, 0.15],'
+          - '        ''slippage_estimates'': [0.0005, 0.0007]'
+          - '    },'
+          - '    statistical_metrics={'
+          - '        ''volatility_clustering_metric'': [0.3],'
+          - '        ''skewness'': [0.1],'
+          - '        ''kurtosis'': [3.2]'
+          - '    },'
+          - '    regularization_methods=[''Lasso'', ''Ridge''],'
+          - '    out_of_sample_split=0.2'
+          - )
+          - print(outputs['selected_model_index'])
+          output: '0'
+        - lines:
+          - print(outputs['model_names'])
+          - print(outputs['model_performance'])
+          output: '[''Lasso_Model'', ''Ridge_Model'']\n[0.74, 0.71]'
+        parameters:
+        - description: 'Dictionary containing feature engineering outputs: ''selected_feature_names''
+            (List[str]) and ''selected_feature_importance'' (List[float]).'
+          name: features
+          type: dict
+        - description: Outputs from analyze_market_structure needed for model context
+            (e.g., participation_rates, slippage_estimates).
+          name: market_structure
+          type: dict
+        - description: Outputs from calculate_statistical_metrics such as volatility_clustering_metric,
+            skewness, kurtosis.
+          name: statistical_metrics
+          type: dict
+        - description: List of regularization techniques to apply (e.g., ['Lasso',
+            'Ridge', 'ElasticNet']).
+          name: regularization_methods
+          type: List[str]
+        - description: Proportion of data reserved for out‑of‑sample validation (0
+            < split < 1).
+          name: out_of_sample_split
+          type: float
+        raises:
+        - description: If required input keys are missing or if out_of_sample_split
+            is not in (0,1).
+          type: ValueError
+        - description: If model fitting fails for all specified regularization methods.
+          type: RuntimeError
+        returns:
+          description: Dictionary with keys matching the node's output_structure,
+            containing model identifiers, descriptions, performance metrics, selected
+            model index, coefficients, coefficient names, and significance flags.
+          type: dict
+        summary: Builds and selects regression‑based predictive models for a statistical
+          arbitrage strategy.
     prompt: Develop 3-5 regression-based models using feature set to predict price
       movements. Apply regularization techniques and select best-performing model
       based on out-of-sample validation. Document coefficient significance.
@@ -495,6 +1096,46 @@ nodes:
         tuned hyperparameter
       key: parameter_ranges_documentation
       type: str
+    prd:
+      conceptual_info: This node performs systematic hyper‑parameter optimization
+        for both the signal generation logic and the position‑sizing rules of a quantitative
+        futures strategy. Using the back‑tested equity‑curve and performance metrics
+        from the `backtest_trading_signals` node, it runs a cross‑validation sweep,
+        evaluates walk‑forward consistency, and produces the best‑performing parameter
+        settings together with documentation of their acceptable ranges.
+      docstring:
+        examples:
+        - lines:
+          - results = optimize_model_parameters()
+          - print(results['optimal_signal_parameters'])
+          - print(results['cross_validation_score'])
+          output: '["lookback=20", "threshold=0.05"]\n0.82'
+        - lines:
+          - '# Example of full result dictionary'
+          - results = {
+          - '    "optimal_signal_parameters": ["ma_fast=10", "ma_slow=30"],'
+          - '    "optimal_position_sizing_parameters": ["vol_multiplier=1.2", "max_exposure=0.15"],'
+          - '    "cross_validation_score": 0.87,'
+          - '    "walk_forward_consistency": true,'
+          - '    "parameter_ranges_documentation": "## Parameter Ranges\n- ma_fast:
+            5‑15\n- ma_slow: 20‑40\n- vol_multiplier: 0.8‑1.5\n- max_exposure: 0.1‑0.2"'
+          - '}'
+          - print(results['walk_forward_consistency'])
+          output: 'True'
+        parameters: []
+        raises:
+        - description: If the dependent backtest data is unavailable or fails validation.
+          type: RuntimeError
+        - description: If the optimization process does not converge to a feasible
+            solution.
+          type: ValueError
+        returns:
+          description: Dictionary containing keys `optimal_signal_parameters`, `optimal_position_sizing_parameters`,
+            `cross_validation_score`, `walk_forward_consistency`, and `parameter_ranges_documentation`
+            as defined in the node's output_structure.
+          type: dict
+        summary: Optimize signal generation and position sizing hyper‑parameters via
+          cross‑validation and walk‑forward analysis.
     prompt: Optimize signal generation and position sizing parameters using cross‑validation.
       Document optimal parameter ranges that pass out‑of‑sample tests. Focus on walk‑forward
       performance consistency.
@@ -527,12 +1168,54 @@ nodes:
         without errors
       key: is_successful
       type: bool
+    prd:
+      conceptual_info: Transforms raw, contract‑specific futures CSV rows into a single,
+        time‑aligned continuous series suitable for downstream quantitative analysis.
+        The node resolves missing timestamps, stitches together contract rollovers,
+        creates a continuous price series, and normalizes volume metrics, producing
+        a clean CSV and meta‑information about the resulting dataset.
+      docstring:
+        examples:
+        - lines:
+          - result = process_historical_data([
+          - '    "2020-01-01T09:30:00Z,2020F,100,101,99,100.5,2000,1500",'
+          - '    "2020-01-01T09:31:00Z,2020F,100.5,102,100,101,2100,1520"'
+          - '])'
+          - print(result['record_count'])
+          output: '2'
+        - lines:
+          - result = process_historical_data(raw_csv_rows)
+          - print(result['is_successful'])
+          - print(result['time_interval_minutes'])
+          output: True\n1
+        parameters:
+        - description: 'List of CSV‑formatted rows produced by `collect_historical_future_data`.
+            Each row contains: timestamp, contract_month, open, high, low, close,
+            volume, open_interest.'
+          name: raw_csv_rows
+          type: List[str]
+        raises:
+        - description: If raw_csv_rows is empty or missing required columns.
+          type: ValueError
+        - description: If the cleaning process cannot infer a uniform time interval
+            or fails during contract rollover stitching.
+          type: RuntimeError
+        returns:
+          description: Dictionary containing cleaned_data_csv, record_count, start_timestamp,
+            end_timestamp, time_interval_minutes, and is_successful as defined in
+            the node's output structure.
+          type: dict
+        summary: Clean and normalize raw futures CSV rows into a continuous, regularly‑spaced
+          dataset.
     prompt: 'Clean raw futures data by: 1) Handling missing timestamps, 2) Adjusting
       for contract rollover, 3) Calculating continuous price series, 4) Normalizing
       volumes. Output cleaned dataset with consistent time intervals.'
   validate_overfitting_risk:
     agent: false
-    description: Assess model robustness to different market regimes
+    description: Assess model robustness to different market regimes by stress‑testing
+      the optimized parameters obtained from `optimize_model_parameters`. The node
+      evaluates how performance degrades when the same parameters are applied to distinct
+      market environments and flags regimes where over‑fitting is evident.
     name: validate_overfitting_risk
     nodes_depended_on:
     - optimize_model_parameters
@@ -558,6 +1241,69 @@ nodes:
         criterion across all tested regimes.
       key: is_robust
       type: bool
+    prd:
+      conceptual_info: The node validates that the hyper‑parameters found by `optimize_model_parameters`
+        are not over‑fitted to a single market condition. By re‑running the back‑test
+        on a suite of contrasting regimes, it quantifies performance drop, isolates
+        vulnerable parameter slices, and produces a concise robustness verdict.
+      docstring:
+        examples:
+        - lines:
+          - result = validate_overfitting_risk(
+          - '    optimized_parameters={''signal_threshold'': 0.48, ''position_scale'':
+            1.1},'
+          - '    regime_definitions={'
+          - '        ''bull'': bull_filter,'
+          - '        ''bear'': bear_filter,'
+          - '        ''high_vol'': high_vol_filter,'
+          - '        ''low_vol'': low_vol_filter,'
+          - '        ''sideways'': sideways_filter'
+          - '    }'
+          - )
+          output: '{''tested_regimes'': [''bull'', ''bear'', ''high_vol'', ''low_vol'',
+            ''sideways''], ''degradation_scores'': [0.02, 0.15, 0.09, 0.03, 0.05],
+            ''affected_parameter_ranges'': [''signal_threshold: 0.30‑0.55'', ''position_scale:
+            0.8‑1.3'', ''signal_threshold: 0.30‑0.55'', ''position_scale: 0.9‑1.2'',
+            ''signal_threshold: 0.35‑0.50''], ''robustness_summary'': ''Model remains
+            robust in bull, low_vol and sideways regimes (≤5% Sharpe drop) but degrades
+            in bear regime (15% drop).'', ''is_robust'': False}'
+        - lines:
+          - result = validate_overfitting_risk(
+          - '    optimized_parameters={''signal_threshold'': 0.55, ''position_scale'':
+            0.9},'
+          - '    regime_definitions={''bull'': bull_filter, ''bear'': bear_filter,
+            ''high_vol'': high_vol_filter, ''low_vol'': low_vol_filter, ''sideways'':
+            sideways_filter}'
+          - )
+          output: '{''tested_regimes'': [''bull'', ''bear'', ''high_vol'', ''low_vol'',
+            ''sideways''], ''degradation_scores'': [0.01, 0.04, 0.02, 0.01, 0.03],
+            ''affected_parameter_ranges'': [''signal_threshold: 0.50‑0.60'', ''signal_threshold:
+            0.50‑0.60'', ''signal_threshold: 0.50‑0.60'', ''signal_threshold: 0.50‑0.60'',
+            ''signal_threshold: 0.50‑0.60''], ''robustness_summary'': ''All regimes
+            show ≤4% Sharpe degradation; model is robust.'', ''is_robust'': True}'
+        parameters:
+        - description: 'Dictionary of parameter settings returned by `optimize_model_parameters`.
+            Keys are parameter names and values are the selected values (e.g., {''signal_threshold'':
+            0.45, ''position_scale'': 1.2}).'
+          name: optimized_parameters
+          type: dict
+        - description: 'Mapping of regime name to a callable that filters historical
+            data to that regime. Example: {''bull'': bull_filter, ''bear'': bear_filter,
+            ...}.'
+          name: regime_definitions
+          type: dict
+        raises:
+        - description: If `optimized_parameters` is empty or missing required keys.
+          type: ValueError
+        - description: If a requested regime is not present in `regime_definitions`.
+          type: KeyError
+        - description: If back‑testing fails for any regime due to data issues.
+          type: RuntimeError
+        returns:
+          description: A dictionary containing the five output fields defined in `output_structure`.
+          type: dict
+        summary: Stress‑tests optimized model parameters across multiple market regimes
+          and reports robustness metrics.
     prompt: Stress-test optimized parameters using 5+ different market regimes (bull,
-      bear, high-volatility, etc.). Identify parameter ranges that produced meaningful
+      bear, high‑volatility, etc.). Identify parameter ranges that produced meaningful
       backtesting degradation.
