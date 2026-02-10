@@ -1,10 +1,92 @@
-dag_type: spec
+dag_type: stub
 description: Generated workflow from UI.
 name: build_quantitative_futures_strategy
 nodes:
   analyze_market_structure:
     agent: false
+    code_node_type: stub
     description: Characterize market depth and liquidity patterns
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass ProcessHistoricalDataOutput(BaseModel):\n    \"\"\"Pydantic model\
+      \ for process_historical_data node outputs.\"\"\"\n    cleaned_data_csv: str\
+      \ = (\n        Field(..., description=\"CSV formatted string of the cleaned\
+      \ dataset, including header row with columns such as timestamp, open, high,\
+      \ low, close, volume, open_interest\")\n    )\n    record_count: int = (\n \
+      \       Field(..., description=\"Number of rows/records in the cleaned dataset\"\
+      )\n    )\n    start_timestamp: str = (\n        Field(..., description=\"ISO8601\
+      \ timestamp of the first record in the cleaned dataset\")\n    )\n    end_timestamp:\
+      \ str = (\n        Field(..., description=\"ISO8601 timestamp of the last record\
+      \ in the cleaned dataset\")\n    )\n    time_interval_minutes: int = (\n   \
+      \     Field(..., description=\"Uniform time interval in minutes between consecutive\
+      \ records in the cleaned dataset\")\n    )\n    is_successful: bool = (\n  \
+      \      Field(..., description=\"Indicates whether the cleaning and normalization\
+      \ process completed without errors\")\n    )\n\n\nclass CalculateStatisticalMetricsOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for calculate_statistical_metrics node outputs.\"\"\
+      \"\n    contract_series: List[str] = (\n        Field(..., description=\"Identifiers\
+      \ of futures contract series for which metrics are calculated\")\n    )\n  \
+      \  daily_return_mean: List[float] = (\n        Field(..., description=\"Mean\
+      \ daily return for each contract series\")\n    )\n    daily_return_std: List[float]\
+      \ = (\n        Field(..., description=\"Standard deviation of daily returns\
+      \ for each contract series\")\n    )\n    weekly_return_mean: List[float] =\
+      \ (\n        Field(..., description=\"Mean weekly return for each contract series\"\
+      )\n    )\n    weekly_return_std: List[float] = (\n        Field(..., description=\"\
+      Standard deviation of weekly returns for each contract series\")\n    )\n  \
+      \  monthly_return_mean: List[float] = (\n        Field(..., description=\"Mean\
+      \ monthly return for each contract series\")\n    )\n    monthly_return_std:\
+      \ List[float] = (\n        Field(..., description=\"Standard deviation of monthly\
+      \ returns for each contract series\")\n    )\n    volatility_clustering_metric:\
+      \ List[float] = (\n        Field(..., description=\"Metric quantifying volatility\
+      \ clustering for each contract series\")\n    )\n    skewness: List[float] =\
+      \ (\n        Field(..., description=\"Skewness of return distribution for each\
+      \ contract series\")\n    )\n    kurtosis: List[float] = (\n        Field(...,\
+      \ description=\"Kurtosis of return distribution for each contract series\")\n\
+      \    )\n    time_weighted_summary: str = (\n        Field(..., description=\"\
+      Human\\u2011readable summary of the statistical metrics, weighted by observation\
+      \ time\")\n    )\n\n\nclass AnalyzeMarketStructureOutput(BaseModel):\n    \"\
+      \"\"Pydantic model for analyze_market_structure node outputs.\"\"\"\n    participation_rates:\
+      \ List[float] = (\n        Field(..., description=\"Calculated participation\
+      \ rates for each time interval (as percentages expressed in decimal form).\"\
+      )\n    )\n    slippage_estimates: List[float] = (\n        Field(..., description=\"\
+      Estimated slippage values (price impact) for representative trade sizes, expressed\
+      \ in price units.\")\n    )\n    latency_sensitivity: List[float] = (\n    \
+      \    Field(..., description=\"Measured sensitivity of execution cost to latency,\
+      \ expressed as cost increase per millisecond.\")\n    )\n    day_of_week_patterns:\
+      \ List[str] = (\n        Field(..., description=\"Descriptive identifiers of\
+      \ recurring market depth patterns observed for each day of the week (e.g., \\\
+      \"Monday high liquidity\\\", \\\"Friday low depth\\\").\")\n    )\n    time_of_day_patterns:\
+      \ List[str] = (\n        Field(..., description=\"Descriptive identifiers of\
+      \ recurring market depth patterns observed for major time-of-day windows.\"\
+      )\n    )\n    summary_report: str = (\n        Field(..., description=\"Narrative\
+      \ summary of the market structure analysis, highlighting key regimes and actionable\
+      \ insights.\")\n    )\n\n\ndef analyze_market_structure(process_historical_data_input:\
+      \ ProcessHistoricalDataOutput, calculate_statistical_metrics_input: CalculateStatisticalMetricsOutput,\
+      \ **kwargs) -> AnalyzeMarketStructureOutput:\n    \"\"\"\n    Analyze market\
+      \ depth and liquidity regimes to produce participation,\n    slippage, latency,\
+      \ and pattern insights.\n\n    Parameters\n    ----------\n    cleaned_data_csv\
+      \ : str\n        CSV string from `process_historical_data` containing timestamped\n\
+      \        OHLCV and open‑interest data.\n    statistical_metrics : dict\n   \
+      \     Dictionary from `calculate_statistical_metrics` containing return\n  \
+      \      moments and volatility‑clustering metrics for each contract series.\n\
+      \n    Returns\n    -------\n    dict\n        Dictionary with keys matching\
+      \ the node's output_structure:\n        participation_rates, slippage_estimates,\
+      \ latency_sensitivity,\n        day_of_week_patterns, time_of_day_patterns,\
+      \ and summary_report.\n\n    Raises\n    ------\n    ValueError\n        If\
+      \ `cleaned_data_csv` is empty or malformed.\n    KeyError\n        If required\
+      \ fields are missing from `statistical_metrics`.\n\n    Examples\n    --------\n\
+      \    >>> cleaned_csv =\n    \"timestamp,open,high,low,close,volume,open_interest\\\
+      n2023-01-01\n    09:30,100,101,99,100.5,5000,2000\"\n    >>> stats = {\"contract_series\"\
+      : [\"CL_F2023\"], \"daily_return_std\": [0.015]}\n    >>> result = analyze_market_structure(cleaned_csv,\
+      \ stats)\n    >>> result['summary_report']\n    \"The market exhibits high participation\
+      \ during morning sessions with low\n    slippage, but latency sensitivity rises\
+      \ sharply after 14:00 UTC. Monday\n    shows consistently high depth, while\
+      \ the 09:30‑11:30 window is the most\n    liquid.\"\n\n    >>> cleaned_csv =\n\
+      \    \"timestamp,open,high,low,close,volume,open_interest\\n2023-01-02\n   \
+      \ 10:00,200,202,198,201,8000,3000\"\n    >>> stats = {\"contract_series\": [\"\
+      GC_F2023\"], \"daily_return_std\": [0.02]}\n    >>> result = analyze_market_structure(cleaned_csv,\
+      \ stats)\n    >>> result['participation_rates']\n    [0.12, 0.15, 0.09, 0.11]\n\
+      \n    \"\"\"\n    return AnalyzeMarketStructureOutput(\n        participation_rates=[],\n\
+      \        slippage_estimates=[],\n        latency_sensitivity=[],\n        day_of_week_patterns=[],\n\
+      \        time_of_day_patterns=[],\n        summary_report=\"\",\n    )"
     name: analyze_market_structure
     nodes_depended_on:
     - process_historical_data
@@ -86,10 +168,89 @@ nodes:
     prompt: Analyze order book dynamics and liquidity regimes by calculating participation
       rates, slippage estimates, and latency sensitivity. Identify day/time-of-week
       patterns in market depth.
+    shims: []
   backtest_trading_signals:
     agent: false
+    code_node_type: stub
     description: Validate strategy performance on historical data using walk‑forward
       analysis with 12‑month rolling windows and report key performance metrics.
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass BuildSignalGenerationModelOutput(BaseModel):\n    \"\"\"Pydantic model\
+      \ for build_signal_generation_model node outputs.\"\"\"\n    model_pseudocode:\
+      \ str = (\n        Field(..., description=\"Pseudocode representation of the\
+      \ signal generation model, including logic flow and conditional statements.\"\
+      )\n    )\n    feature_names: List[str] = (\n        Field(..., description=\"\
+      List of feature names used as inputs to the signal generation model.\")\n  \
+      \  )\n    feature_weights: List[float] = (\n        Field(..., description=\"\
+      Corresponding weight for each feature in the model, reflecting its importance.\"\
+      )\n    )\n    entry_thresholds: List[float] = (\n        Field(..., description=\"\
+      Threshold values that trigger entry signals for each defined signal component.\"\
+      )\n    )\n    exit_thresholds: List[float] = (\n        Field(..., description=\"\
+      Threshold values that trigger exit signals for each defined signal component.\"\
+      )\n    )\n    position_sizing_parameters: List[float] = (\n        Field(...,\
+      \ description=\"Parameters related to position sizing (e.g., volatility scaling\
+      \ factor, max exposure) used within the model.\")\n    )\n\n\nclass ModelRegressionBasedStrategyOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for model_regression_based_strategy node outputs.\"\
+      \"\"\n    model_names: List[str] = (\n        Field(..., description=\"Names\
+      \ or identifiers for each regression model generated\")\n    )\n    model_descriptions:\
+      \ List[str] = (\n        Field(..., description=\"Brief textual description\
+      \ of each model, including regularization method used\")\n    )\n    model_performance:\
+      \ List[float] = (\n        Field(..., description=\"Out-of-sample performance\
+      \ metric (e.g., R\\u00b2 or information ratio) for each model\")\n    )\n  \
+      \  selected_model_index: int = (\n        Field(..., description=\"Zero\\u2011based\
+      \ index of the model chosen as best performing\")\n    )\n    selected_model_coefficients:\
+      \ List[float] = (\n        Field(..., description=\"List of coefficient values\
+      \ for the selected model, ordered to match the feature list\")\n    )\n    selected_model_coefficient_names:\
+      \ List[str] = (\n        Field(..., description=\"Names of the features corresponding\
+      \ to each coefficient in the selected model\")\n    )\n    selected_model_significant:\
+      \ List[bool] = (\n        Field(..., description=\"Boolean flags indicating\
+      \ whether each coefficient in the selected model is statistically significant\"\
+      )\n    )\n\n\nclass CreateLiquidityControlRulesOutput(BaseModel):\n    \"\"\"\
+      Pydantic model for create_liquidity_control_rules node outputs.\"\"\"\n    rule_names:\
+      \ List[str] = (\n        Field(..., description=\"Identifiers for each liquidity\
+      \ control rule\")\n    )\n    depth_thresholds: List[float] = (\n        Field(...,\
+      \ description=\"Depth\\u2011of\\u2011book thresholds (e.g., minimum available\
+      \ volume) for each rule\")\n    )\n    volatility_thresholds: List[float] =\
+      \ (\n        Field(..., description=\"Volatility levels (e.g., standard deviation\
+      \ of recent price changes) that trigger the rule\")\n    )\n    time_of_day_windows:\
+      \ List[str] = (\n        Field(..., description=\"Time\\u2011of\\u2011day regimes\
+      \ (e.g., \\\"09:30-11:00\\\", \\\"15:00-16:00\\\") applicable to each rule\"\
+      )\n    )\n    order_type: List[str] = (\n        Field(..., description=\"Order\
+      \ execution type for each rule (e.g., \\\"market\\\", \\\"limit\\\")\")\n  \
+      \  )\n    batch_execution_flags: List[bool] = (\n        Field(..., description=\"\
+      Whether batch execution is enabled for each rule\")\n    )\n    rule_descriptions:\
+      \ List[str] = (\n        Field(..., description=\"Human\\u2011readable description\
+      \ of each liquidity control rule\")\n    )\n\n\nclass BacktestTradingSignalsOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for backtest_trading_signals node outputs.\"\"\"\n\
+      \    equity_curve: List[float] = (\n        Field(..., description=\"Time\\\
+      u2011series of portfolio equity values for each backtest period\")\n    )\n\
+      \    sharpe_ratio: float = (\n        Field(..., description=\"Annualized Sharpe\
+      \ ratio of the backtested strategy\")\n    )\n    max_drawdown: float = (\n\
+      \        Field(..., description=\"Maximum percentage drawdown observed across\
+      \ all walk\\u2011forward windows\")\n    )\n    annualized_return: float = (\n\
+      \        Field(..., description=\"Overall annualized return percentage from\
+      \ the backtest\")\n    )\n    drawdown_duration_profile: List[int] = (\n   \
+      \     Field(..., description=\"List of drawdown durations (in days) for each\
+      \ observed drawdown event\")\n    )\n\n\ndef backtest_trading_signals(build_signal_generation_model_input:\
+      \ BuildSignalGenerationModelOutput, model_regression_based_strategy_input: ModelRegressionBasedStrategyOutput,\
+      \ create_liquidity_control_rules_input: CreateLiquidityControlRulesOutput, **kwargs)\
+      \ -> BacktestTradingSignalsOutput:\n    \"\"\"\n    Run a 12‑month rolling walk‑forward\
+      \ backtest of the strategy and return key\n    performance metrics.\n\n    Returns\n\
+      \    -------\n    dict\n        Dictionary containing `equity_curve`, `sharpe_ratio`,\n\
+      \        `max_drawdown`, `annualized_return`, and `drawdown_duration_profile`\n\
+      \        as defined in the output structure.\n\n    Raises\n    ------\n   \
+      \ ValueError\n        If any of the dependent nodes fail to produce required\
+      \ inputs (e.g.,\n        missing model pseudocode or liquidity rules).\n   \
+      \ RuntimeError\n        If the backtest simulation encounters an unexpected\
+      \ error such as\n        data misalignment or division by zero.\n\n    Examples\n\
+      \    --------\n    >>> results = backtest_trading_signals()\n    {\n      'equity_curve':\
+      \ [100000.0, 101200.5, 102450.3, ...],\n      'sharpe_ratio': 1.45,\n      'max_drawdown':\
+      \ -0.12,\n      'annualized_return': 0.18,\n      'drawdown_duration_profile':\
+      \ [5, 12, 7]\n    }\n\n    >>> print(f\"Annualized Return: {results['annualized_return']:.2%}\"\
+      )\n    Annualized Return: 18.00%\n\n    \"\"\"\n    return BacktestTradingSignalsOutput(\n\
+      \        equity_curve=[],\n        sharpe_ratio=0.0,\n        max_drawdown=0.0,\n\
+      \        annualized_return=0.0,\n        drawdown_duration_profile=[],\n   \
+      \ )"
     name: backtest_trading_signals
     nodes_depended_on:
     - build_signal_generation_model
@@ -146,12 +307,98 @@ nodes:
     prompt: 'Backtest trading signals using walk-forward analysis with 12mo rolling
       windows. Report: equity curve, sharpe ratio, max DD, annualized return, drawdown
       duration profile.'
+    shims: []
   build_signal_generation_model:
     agent: false
+    code_node_type: stub
     description: Develop core trading signal generation mechanism by integrating selected
       predictive features, strategy framework specifications, and market structure
       insights into a weighted scoring model with explicit entry/exit thresholds and
       position sizing parameters.
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass FeatureEngineeringOutput(BaseModel):\n    \"\"\"Pydantic model for\
+      \ feature_engineering node outputs.\"\"\"\n    feature_names: List[str] = (\n\
+      \        Field(..., description=\"List of generated feature names (e.g., \\\"\
+      rsi_14\\\", \\\"macd_hist\\\", \\\"vol_surface_30d\\\")\")\n    )\n    feature_descriptions:\
+      \ List[str] = (\n        Field(..., description=\"Brief description of each\
+      \ feature corresponding to the order in feature_names\")\n    )\n    feature_importance_scores:\
+      \ List[float] = (\n        Field(..., description=\"Numerical importance scores\
+      \ for each feature as derived from ranking techniques (higher = more predictive)\"\
+      )\n    )\n    selected_feature_names: List[str] = (\n        Field(..., description=\"\
+      Subset of feature_names that are identified as the strongest candidates based\
+      \ on importance scores\")\n    )\n    selected_feature_importance: List[float]\
+      \ = (\n        Field(..., description=\"Importance scores corresponding to the\
+      \ selected_feature_names\")\n    )\n\n\nclass DefineStrategyFrameworkOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for define_strategy_framework node outputs.\"\"\"\n\
+      \    strategy_type: str = (\n        Field(..., description=\"High-level category\
+      \ of the strategy (e.g., statistical arbitrage, trend following, mean reversion)\"\
+      )\n    )\n    defining_characteristics: List[str] = (\n        Field(..., description=\"\
+      3-5 concise bullet points that capture the core attributes of the strategy\"\
+      )\n    )\n    signal_generation_methodology: str = (\n        Field(..., description=\"\
+      Brief description of how trading signals are generated within the framework\"\
+      )\n    )\n    position_sizing_approach: str = (\n        Field(..., description=\"\
+      Summary of the position sizing rules and risk allocation logic\")\n    )\n \
+      \   execution_protocols: str = (\n        Field(..., description=\"Overview\
+      \ of order execution tactics, including order types and routing preferences\"\
+      )\n    )\n    framework_summary: str = (\n        Field(..., description=\"\
+      Full 250-word description combining all elements of the framework\")\n    )\n\
+      \n\nclass AnalyzeMarketStructureOutput(BaseModel):\n    \"\"\"Pydantic model\
+      \ for analyze_market_structure node outputs.\"\"\"\n    participation_rates:\
+      \ List[float] = (\n        Field(..., description=\"Calculated participation\
+      \ rates for each time interval (as percentages expressed in decimal form).\"\
+      )\n    )\n    slippage_estimates: List[float] = (\n        Field(..., description=\"\
+      Estimated slippage values (price impact) for representative trade sizes, expressed\
+      \ in price units.\")\n    )\n    latency_sensitivity: List[float] = (\n    \
+      \    Field(..., description=\"Measured sensitivity of execution cost to latency,\
+      \ expressed as cost increase per millisecond.\")\n    )\n    day_of_week_patterns:\
+      \ List[str] = (\n        Field(..., description=\"Descriptive identifiers of\
+      \ recurring market depth patterns observed for each day of the week (e.g., \\\
+      \"Monday high liquidity\\\", \\\"Friday low depth\\\").\")\n    )\n    time_of_day_patterns:\
+      \ List[str] = (\n        Field(..., description=\"Descriptive identifiers of\
+      \ recurring market depth patterns observed for major time-of-day windows.\"\
+      )\n    )\n    summary_report: str = (\n        Field(..., description=\"Narrative\
+      \ summary of the market structure analysis, highlighting key regimes and actionable\
+      \ insights.\")\n    )\n\n\nclass BuildSignalGenerationModelOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for build_signal_generation_model node outputs.\"\"\
+      \"\n    model_pseudocode: str = (\n        Field(..., description=\"Pseudocode\
+      \ representation of the signal generation model, including logic flow and conditional\
+      \ statements.\")\n    )\n    feature_names: List[str] = (\n        Field(...,\
+      \ description=\"List of feature names used as inputs to the signal generation\
+      \ model.\")\n    )\n    feature_weights: List[float] = (\n        Field(...,\
+      \ description=\"Corresponding weight for each feature in the model, reflecting\
+      \ its importance.\")\n    )\n    entry_thresholds: List[float] = (\n       \
+      \ Field(..., description=\"Threshold values that trigger entry signals for each\
+      \ defined signal component.\")\n    )\n    exit_thresholds: List[float] = (\n\
+      \        Field(..., description=\"Threshold values that trigger exit signals\
+      \ for each defined signal component.\")\n    )\n    position_sizing_parameters:\
+      \ List[float] = (\n        Field(..., description=\"Parameters related to position\
+      \ sizing (e.g., volatility scaling factor, max exposure) used within the model.\"\
+      )\n    )\n\n\ndef build_signal_generation_model(feature_engineering_input: FeatureEngineeringOutput,\
+      \ define_strategy_framework_input: DefineStrategyFrameworkOutput, analyze_market_structure_input:\
+      \ AnalyzeMarketStructureOutput, **kwargs) -> BuildSignalGenerationModelOutput:\n\
+      \    \"\"\"\n    Constructs a weighted signal generation model using feature\
+      \ engineering\n    output, strategy framework definitions, and market structure\
+      \ analysis.\n\n    Returns\n    -------\n    dict\n        A dictionary containing\
+      \ the model pseudocode and all parameter\n        arrays: {     \"model_pseudocode\"\
+      : str,     \"feature_names\":\n        List[str],     \"feature_weights\": List[float],\n\
+      \        \"entry_thresholds\": List[float],     \"exit_thresholds\": List[float],\n\
+      \        \"position_sizing_parameters\": List[float] }\n\n    Raises\n    ------\n\
+      \    ValueError\n        If the parent nodes do not provide matching lengths\
+      \ for\n        feature_names and feature_weights.\n    RuntimeError\n      \
+      \  If required inputs from any parent node are missing or malformed.\n\n   \
+      \ Examples\n    --------\n    >>> model = build_signal_generation_model()\n\
+      \    >>> print(model[\"feature_names\"])\n    >>> print(model[\"entry_thresholds\"\
+      ])\n    [\"rsi_14\", \"macd_hist\", \"vol_surface_30d\"]\\n[0.6, -0.3]\n\n \
+      \   >>> model = build_signal_generation_model()\n    >>> print(model[\"model_pseudocode\"\
+      ])\n    \\\"\\\"\\\"# Pseudocode\\\\nscore = 0.0\\\\nfor f, w in zip(feature_names,\n\
+      \    feature_weights):\\\\n    score += w * get_feature(f)\\\\nif score >\n\
+      \    entry_thresholds[0]:\\\\n    signal = 'LONG'\\\\nelif score <\n    exit_thresholds[0]:\\\
+      \\n    signal = 'SHORT'\\\\nelse:\\\\n    signal = 'HOLD'\\\\n#\n    Position\
+      \ sizing\\\\nsize = base_notional *\n    position_sizing_parameters[0]\\\\n\\\
+      \"\\\"\\\"\"\n\n    \"\"\"\n    return BuildSignalGenerationModelOutput(\n \
+      \       model_pseudocode=\"\",\n        feature_names=[],\n        feature_weights=[],\n\
+      \        entry_thresholds=[],\n        exit_thresholds=[],\n        position_sizing_parameters=[],\n\
+      \    )"
     name: build_signal_generation_model
     nodes_depended_on:
     - feature_engineering
@@ -222,9 +469,101 @@ nodes:
     prompt: Implement a signal generation model using selected features and strategy
       framework. Create explicit weighting/floating thresholds for entry/exit decisions.
       Format as pseudocode with parameter definitions.
+    shims: []
   calculate_performance_metrics:
     agent: false
+    code_node_type: stub
     description: Quantify strategy efficiency across multiple dimensions
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass BacktestTradingSignalsOutput(BaseModel):\n    \"\"\"Pydantic model\
+      \ for backtest_trading_signals node outputs.\"\"\"\n    equity_curve: List[float]\
+      \ = (\n        Field(..., description=\"Time\\u2011series of portfolio equity\
+      \ values for each backtest period\")\n    )\n    sharpe_ratio: float = (\n \
+      \       Field(..., description=\"Annualized Sharpe ratio of the backtested strategy\"\
+      )\n    )\n    max_drawdown: float = (\n        Field(..., description=\"Maximum\
+      \ percentage drawdown observed across all walk\\u2011forward windows\")\n  \
+      \  )\n    annualized_return: float = (\n        Field(..., description=\"Overall\
+      \ annualized return percentage from the backtest\")\n    )\n    drawdown_duration_profile:\
+      \ List[int] = (\n        Field(..., description=\"List of drawdown durations\
+      \ (in days) for each observed drawdown event\")\n    )\n\n\nclass OptimizeModelParametersOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for optimize_model_parameters node outputs.\"\"\"\n\
+      \    optimal_signal_parameters: List[str] = (\n        Field(..., description=\"\
+      List of signal generation parameter settings in \\\"param=value\\\" format that\
+      \ achieved the best cross\\u2011validation performance\")\n    )\n    optimal_position_sizing_parameters:\
+      \ List[str] = (\n        Field(..., description=\"List of position sizing parameter\
+      \ settings in \\\"param=value\\\" format derived from the optimization\")\n\
+      \    )\n    cross_validation_score: float = (\n        Field(..., description=\"\
+      Aggregate performance metric (e.g., average Sharpe ratio) obtained during cross\\\
+      u2011validation for the selected parameters\")\n    )\n    walk_forward_consistency:\
+      \ bool = (\n        Field(..., description=\"Indicates whether the optimized\
+      \ parameters maintained performance across walk\\u2011forward windows\")\n \
+      \   )\n    parameter_ranges_documentation: str = (\n        Field(..., description=\"\
+      Markdown\\u2011formatted text summarizing the acceptable ranges for each tuned\
+      \ hyperparameter\")\n    )\n\n\nclass CalculatePerformanceMetricsOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for calculate_performance_metrics node outputs.\"\"\
+      \"\n    baseline_annualized_return: float = (\n        Field(..., description=\"\
+      Annualized return of the baseline model (percentage expressed as decimal)\"\
+      )\n    )\n    optimized_annualized_return: float = (\n        Field(..., description=\"\
+      Annualized return of the optimized model (percentage expressed as decimal)\"\
+      )\n    )\n    baseline_sharpe_ratio: float = (\n        Field(..., description=\"\
+      Sharpe ratio of the baseline model\")\n    )\n    optimized_sharpe_ratio: float\
+      \ = (\n        Field(..., description=\"Sharpe ratio of the optimized model\"\
+      )\n    )\n    baseline_sortino_ratio: float = (\n        Field(..., description=\"\
+      Sortino ratio of the baseline model\")\n    )\n    optimized_sortino_ratio:\
+      \ float = (\n        Field(..., description=\"Sortino ratio of the optimized\
+      \ model\")\n    )\n    baseline_calmar_ratio: float = (\n        Field(...,\
+      \ description=\"Calmar ratio of the baseline model\")\n    )\n    optimized_calmar_ratio:\
+      \ float = (\n        Field(..., description=\"Calmar ratio of the optimized\
+      \ model\")\n    )\n    baseline_win_rate: float = (\n        Field(..., description=\"\
+      Proportion of winning trades for the baseline model (0 to 1)\")\n    )\n   \
+      \ optimized_win_rate: float = (\n        Field(..., description=\"Proportion\
+      \ of winning trades for the optimized model (0 to 1)\")\n    )\n    baseline_avg_holding_period:\
+      \ float = (\n        Field(..., description=\"Average holding period of trades\
+      \ in the baseline model (in days)\")\n    )\n    optimized_avg_holding_period:\
+      \ float = (\n        Field(..., description=\"Average holding period of trades\
+      \ in the optimized model (in days)\")\n    )\n    baseline_drawdown_recovery_speed:\
+      \ float = (\n        Field(..., description=\"Speed of drawdown recovery for\
+      \ the baseline model (e.g., days to recover 50% of max drawdown)\")\n    )\n\
+      \    optimized_drawdown_recovery_speed: float = (\n        Field(..., description=\"\
+      Speed of drawdown recovery for the optimized model (e.g., days to recover 50%\
+      \ of max drawdown)\")\n    )\n\n\ndef calculate_performance_metrics(backtest_trading_signals_input:\
+      \ BacktestTradingSignalsOutput, optimize_model_parameters_input: OptimizeModelParametersOutput,\
+      \ **kwargs) -> CalculatePerformanceMetricsOutput:\n    \"\"\"\n    Compute detailed\
+      \ performance metrics for baseline and optimized trading\n    models.\n\n  \
+      \  Parameters\n    ----------\n    baseline_backtest : dict\n        Dictionary\
+      \ output from `backtest_trading_signals` for the baseline\n        model containing\
+      \ keys: 'equity_curve' (list[float]), 'sharpe_ratio'\n        (float), 'max_drawdown'\
+      \ (float), 'annualized_return' (float),\n        'drawdown_duration_profile'\
+      \ (list[int]).\n    optimized_params : dict\n        Dictionary output from\
+      \ `optimize_model_parameters` containing the\n        optimized parameter settings.\
+      \ Used to re‑run backtest internally for\n        the optimized model.\n\n \
+      \   Returns\n    -------\n    dict\n        Dictionary with the keys defined\
+      \ in the node's output_structure,\n        each mapping to a float metric for\
+      \ baseline and optimized models.\n\n    Raises\n    ------\n    ValueError\n\
+      \        If required keys are missing from inputs or if the equity curve\n \
+      \       lengths are inconsistent.\n    RuntimeError\n        If the optimized\
+      \ backtest fails to produce a valid equity curve.\n\n    Examples\n    --------\n\
+      \    >>> baseline = {\n    ...     'equity_curve': [100, 102, 105, 103],\n \
+      \   ...     'sharpe_ratio': 1.2,\n    ...     'max_drawdown': -0.04,\n    ...\
+      \     'annualized_return': 0.15,\n    ...     'drawdown_duration_profile': [2,\
+      \ 3]\n    >>> }\n    >>> optimized_params = {'optimal_signal_parameters': ['threshold=0.6'],\n\
+      \    'optimal_position_sizing_parameters': ['vol_factor=1.1']}\n    >>> metrics\
+      \ = calculate_performance_metrics(baseline, optimized_params)\n    {\n     \
+      \ 'baseline_annualized_return': 0.15,\n      'optimized_annualized_return':\
+      \ 0.18,\n      'baseline_sharpe_ratio': 1.2,\n      'optimized_sharpe_ratio':\
+      \ 1.35,\n      'baseline_sortino_ratio': 1.5,\n      'optimized_sortino_ratio':\
+      \ 1.7,\n      'baseline_calmar_ratio': 3.75,\n      'optimized_calmar_ratio':\
+      \ 4.2,\n      'baseline_win_rate': 0.55,\n      'optimized_win_rate': 0.62,\n\
+      \      'baseline_avg_holding_period': 4.2,\n      'optimized_avg_holding_period':\
+      \ 3.9,\n      'baseline_drawdown_recovery_speed': 5.0,\n      'optimized_drawdown_recovery_speed':\
+      \ 4.2\n    }\n\n    \"\"\"\n    return CalculatePerformanceMetricsOutput(\n\
+      \        baseline_annualized_return=0.0,\n        optimized_annualized_return=0.0,\n\
+      \        baseline_sharpe_ratio=0.0,\n        optimized_sharpe_ratio=0.0,\n \
+      \       baseline_sortino_ratio=0.0,\n        optimized_sortino_ratio=0.0,\n\
+      \        baseline_calmar_ratio=0.0,\n        optimized_calmar_ratio=0.0,\n \
+      \       baseline_win_rate=0.0,\n        optimized_win_rate=0.0,\n        baseline_avg_holding_period=0.0,\n\
+      \        optimized_avg_holding_period=0.0,\n        baseline_drawdown_recovery_speed=0.0,\n\
+      \        optimized_drawdown_recovery_speed=0.0,\n    )"
     name: calculate_performance_metrics
     nodes_depended_on:
     - backtest_trading_signals
@@ -332,12 +671,81 @@ nodes:
     prompt: 'Calculate: annualized return, sharpe ratio, sortino ratio, calmar ratio,
       win rate, average holding period, and drawdown recovery speed for both baseline
       and optimized models.'
+    shims: []
   calculate_statistical_metrics:
     agent: false
+    code_node_type: stub
     description: Compute key statistical properties of returns distribution for each
       futures contract series, including daily/weekly/monthly return moments, volatility
       clustering, and non‑normality measures, and produce a time‑weighted human‑readable
       summary.
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass ProcessHistoricalDataOutput(BaseModel):\n    \"\"\"Pydantic model\
+      \ for process_historical_data node outputs.\"\"\"\n    cleaned_data_csv: str\
+      \ = (\n        Field(..., description=\"CSV formatted string of the cleaned\
+      \ dataset, including header row with columns such as timestamp, open, high,\
+      \ low, close, volume, open_interest\")\n    )\n    record_count: int = (\n \
+      \       Field(..., description=\"Number of rows/records in the cleaned dataset\"\
+      )\n    )\n    start_timestamp: str = (\n        Field(..., description=\"ISO8601\
+      \ timestamp of the first record in the cleaned dataset\")\n    )\n    end_timestamp:\
+      \ str = (\n        Field(..., description=\"ISO8601 timestamp of the last record\
+      \ in the cleaned dataset\")\n    )\n    time_interval_minutes: int = (\n   \
+      \     Field(..., description=\"Uniform time interval in minutes between consecutive\
+      \ records in the cleaned dataset\")\n    )\n    is_successful: bool = (\n  \
+      \      Field(..., description=\"Indicates whether the cleaning and normalization\
+      \ process completed without errors\")\n    )\n\n\nclass CalculateStatisticalMetricsOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for calculate_statistical_metrics node outputs.\"\"\
+      \"\n    contract_series: List[str] = (\n        Field(..., description=\"Identifiers\
+      \ of futures contract series for which metrics are calculated\")\n    )\n  \
+      \  daily_return_mean: List[float] = (\n        Field(..., description=\"Mean\
+      \ daily return for each contract series\")\n    )\n    daily_return_std: List[float]\
+      \ = (\n        Field(..., description=\"Standard deviation of daily returns\
+      \ for each contract series\")\n    )\n    weekly_return_mean: List[float] =\
+      \ (\n        Field(..., description=\"Mean weekly return for each contract series\"\
+      )\n    )\n    weekly_return_std: List[float] = (\n        Field(..., description=\"\
+      Standard deviation of weekly returns for each contract series\")\n    )\n  \
+      \  monthly_return_mean: List[float] = (\n        Field(..., description=\"Mean\
+      \ monthly return for each contract series\")\n    )\n    monthly_return_std:\
+      \ List[float] = (\n        Field(..., description=\"Standard deviation of monthly\
+      \ returns for each contract series\")\n    )\n    volatility_clustering_metric:\
+      \ List[float] = (\n        Field(..., description=\"Metric quantifying volatility\
+      \ clustering for each contract series\")\n    )\n    skewness: List[float] =\
+      \ (\n        Field(..., description=\"Skewness of return distribution for each\
+      \ contract series\")\n    )\n    kurtosis: List[float] = (\n        Field(...,\
+      \ description=\"Kurtosis of return distribution for each contract series\")\n\
+      \    )\n    time_weighted_summary: str = (\n        Field(..., description=\"\
+      Human\\u2011readable summary of the statistical metrics, weighted by observation\
+      \ time\")\n    )\n\n\ndef calculate_statistical_metrics(process_historical_data_input:\
+      \ ProcessHistoricalDataOutput, **kwargs) -> CalculateStatisticalMetricsOutput:\n\
+      \    \"\"\"\n    Calculate statistical return metrics for multiple futures contract\
+      \ series\n    from cleaned price data.\n\n    Parameters\n    ----------\n \
+      \   cleaned_data_csv : str\n        CSV‑formatted string produced by `process_historical_data`,\n\
+      \        containing columns: timestamp, open, high, low, close, volume,\n  \
+      \      open_interest.\n\n    Returns\n    -------\n    dict\n        Dictionary\
+      \ with keys matching the node's output_structure, each\n        holding the\
+      \ computed metric list or summary string.\n\n    Raises\n    ------\n    ValueError\n\
+      \        If the CSV cannot be parsed, lacks required columns, or contains\n\
+      \        insufficient data for a given contract series.\n    RuntimeError\n\
+      \        If numerical computations (e.g., division by zero in volatility\n \
+      \       clustering) fail.\n\n    Examples\n    --------\n    >>> csv_data =\
+      \ (\"timestamp,open,high,low,close,volume,open_interest\\n\"\n    ...      \
+      \       \"2023-01-01 09:30,100,101,99,100.5,2000,10\\n\"\n    ...          \
+      \   \"2023-01-02 09:30,100.5,102,100,101,2100,11\")\n    >>> metrics = calculate_statistical_metrics(csv_data)\n\
+      \    {\n      'contract_series': ['CL_FUT'],\n      'daily_return_mean': [0.005],\n\
+      \      'daily_return_std': [0.0012],\n      'weekly_return_mean': [0.032],\n\
+      \      'weekly_return_std': [0.005],\n      'monthly_return_mean': [0.128],\n\
+      \      'monthly_return_std': [0.020],\n      'volatility_clustering_metric':\
+      \ [1.45],\n      'skewness': [0.12],\n      'kurtosis': [3.4],\n      'time_weighted_summary':\
+      \ 'Daily mean 0.5 %, weekly mean 3.2 %, monthly\n    mean 12.8 %, volatility\
+      \ clustering 1.45, skew 0.12, kurtosis 3.4.'\n    }\n\n    >>> # Missing required\
+      \ column triggers an error\n    >>> bad_csv = \"timestamp,open,high,low,volume,open_interest\\\
+      n2023-01-01\n    09:30,100,101,99,2000,10\"\n    >>> calculate_statistical_metrics(bad_csv)\n\
+      \    ValueError: CSV must contain a 'close' column.\n\n    \"\"\"\n    return\
+      \ CalculateStatisticalMetricsOutput(\n        contract_series=[],\n        daily_return_mean=[],\n\
+      \        daily_return_std=[],\n        weekly_return_mean=[],\n        weekly_return_std=[],\n\
+      \        monthly_return_mean=[],\n        monthly_return_std=[],\n        volatility_clustering_metric=[],\n\
+      \        skewness=[],\n        kurtosis=[],\n        time_weighted_summary=\"\
+      \",\n    )"
     name: calculate_statistical_metrics
     nodes_depended_on:
     - process_historical_data
@@ -424,9 +832,47 @@ nodes:
     prompt: Calculate daily/weekly/monthly return distributions, volatility clustering
       metrics, and non‑normality measures (skew, kurtosis) for each futures contract
       series. Present as time‑weighted summary statistics.
+    shims: []
   collect_historical_future_data:
     agent: false
+    code_node_type: stub
     description: Retrieve historical futures price data for targeted contracts
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass CollectHistoricalFutureDataOutput(BaseModel):\n    \"\"\"Pydantic\
+      \ model for collect_historical_future_data node outputs.\"\"\"\n    csv_rows:\
+      \ List[str] = (\n        Field(..., description=\"List of CSV-formatted rows,\
+      \ each row representing a timestamped record with fields: timestamp, contract_month,\
+      \ open, high, low, close, volume, open_interest\")\n    )\n    contracts: List[str]\
+      \ = (\n        Field(..., description=\"List of contract identifiers (e.g.,\
+      \ futures symbols and months) included in the collected dataset\")\n    )\n\
+      \    start_date: str = (\n        Field(..., description=\"Earliest date (inclusive)\
+      \ of the collected data in ISO 8601 format (YYYY-MM-DD)\")\n    )\n    end_date:\
+      \ str = (\n        Field(..., description=\"Latest date (inclusive) of the collected\
+      \ data in ISO 8601 format (YYYY-MM-DD)\")\n    )\n    row_count: int = (\n \
+      \       Field(..., description=\"Total number of data rows collected (excluding\
+      \ header)\")\n    )\n\n\ndef collect_historical_future_data(general_input: str,\
+      \ **kwargs) -> CollectHistoricalFutureDataOutput:\n    \"\"\"\n    Collects\
+      \ multi‑year historical futures price, volume, and open‑interest data\n    and\
+      \ returns it in a structured CSV format.\n\n    Returns\n    -------\n    dict\n\
+      \        Dictionary containing: - **csv_rows** (List[str]): CSV rows with\n\
+      \        fields timestamp, contract_month, open, high, low, close, volume,\n\
+      \        open_interest. - **contracts** (List[str]): Identifiers of the\n  \
+      \      contracts included. - **start_date** (str): ISO‑8601 start date of\n\
+      \        the dataset. - **end_date** (str): ISO‑8601 end date of the dataset.\n\
+      \        - **row_count** (int): Number of data rows (excluding header).\n\n\
+      \    Raises\n    ------\n    ConnectionError\n        If the data provider service\
+      \ cannot be reached.\n    ValueError\n        If no contracts satisfy the 5‑year\
+      \ data requirement.\n    RuntimeError\n        If the retrieved data cannot\
+      \ be parsed into the expected CSV schema.\n\n    Examples\n    --------\n  \
+      \  >>> result = collect_historical_future_data()\n    {\n        'csv_rows':\
+      \ [\n            '2020-01-02 09:30:00,CLM2020,71.45,71.60,71.30,71.55,12000,50000',\n\
+      \            '2020-01-02 09:31:00,CLM2020,71.55,71.70,71.40,71.65,11500,50500',\n\
+      \            ...\n        ],\n        'contracts': ['CLM2020', 'CLU2020', 'CLZ2021'],\n\
+      \        'start_date': '2015-01-02',\n        'end_date': '2023-12-31',\n  \
+      \      'row_count': 1056000\n    }\n\n    >>> len(result['csv_rows'])\n    >>>\
+      \ result['row_count']\n    1056000\n    1056000\n\n    \"\"\"\n    return CollectHistoricalFutureDataOutput(\n\
+      \        csv_rows=[],\n        contracts=[],\n        start_date=\"\",\n   \
+      \     end_date=\"\",\n        row_count=0,\n    )"
     name: collect_historical_future_data
     nodes_depended_on: []
     nodes_dependent_on: []
@@ -499,10 +945,89 @@ nodes:
     prompt: Identify and collect 5+ years of historical futures data including open/high/low/close
       prices, volumes, and open interest for multiple contract months. Format as CSV
       with timestamped rows.
+    shims: []
   compile_strategy_documentation:
     agent: false
+    code_node_type: stub
     description: Produce a comprehensive strategy specification document by synthesizing
       the framework definition and performance metrics into human‑readable sections.
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass CalculatePerformanceMetricsOutput(BaseModel):\n    \"\"\"Pydantic\
+      \ model for calculate_performance_metrics node outputs.\"\"\"\n    baseline_annualized_return:\
+      \ float = (\n        Field(..., description=\"Annualized return of the baseline\
+      \ model (percentage expressed as decimal)\")\n    )\n    optimized_annualized_return:\
+      \ float = (\n        Field(..., description=\"Annualized return of the optimized\
+      \ model (percentage expressed as decimal)\")\n    )\n    baseline_sharpe_ratio:\
+      \ float = (\n        Field(..., description=\"Sharpe ratio of the baseline model\"\
+      )\n    )\n    optimized_sharpe_ratio: float = (\n        Field(..., description=\"\
+      Sharpe ratio of the optimized model\")\n    )\n    baseline_sortino_ratio: float\
+      \ = (\n        Field(..., description=\"Sortino ratio of the baseline model\"\
+      )\n    )\n    optimized_sortino_ratio: float = (\n        Field(..., description=\"\
+      Sortino ratio of the optimized model\")\n    )\n    baseline_calmar_ratio: float\
+      \ = (\n        Field(..., description=\"Calmar ratio of the baseline model\"\
+      )\n    )\n    optimized_calmar_ratio: float = (\n        Field(..., description=\"\
+      Calmar ratio of the optimized model\")\n    )\n    baseline_win_rate: float\
+      \ = (\n        Field(..., description=\"Proportion of winning trades for the\
+      \ baseline model (0 to 1)\")\n    )\n    optimized_win_rate: float = (\n   \
+      \     Field(..., description=\"Proportion of winning trades for the optimized\
+      \ model (0 to 1)\")\n    )\n    baseline_avg_holding_period: float = (\n   \
+      \     Field(..., description=\"Average holding period of trades in the baseline\
+      \ model (in days)\")\n    )\n    optimized_avg_holding_period: float = (\n \
+      \       Field(..., description=\"Average holding period of trades in the optimized\
+      \ model (in days)\")\n    )\n    baseline_drawdown_recovery_speed: float = (\n\
+      \        Field(..., description=\"Speed of drawdown recovery for the baseline\
+      \ model (e.g., days to recover 50% of max drawdown)\")\n    )\n    optimized_drawdown_recovery_speed:\
+      \ float = (\n        Field(..., description=\"Speed of drawdown recovery for\
+      \ the optimized model (e.g., days to recover 50% of max drawdown)\")\n    )\n\
+      \n\nclass DefineStrategyFrameworkOutput(BaseModel):\n    \"\"\"Pydantic model\
+      \ for define_strategy_framework node outputs.\"\"\"\n    strategy_type: str\
+      \ = (\n        Field(..., description=\"High-level category of the strategy\
+      \ (e.g., statistical arbitrage, trend following, mean reversion)\")\n    )\n\
+      \    defining_characteristics: List[str] = (\n        Field(..., description=\"\
+      3-5 concise bullet points that capture the core attributes of the strategy\"\
+      )\n    )\n    signal_generation_methodology: str = (\n        Field(..., description=\"\
+      Brief description of how trading signals are generated within the framework\"\
+      )\n    )\n    position_sizing_approach: str = (\n        Field(..., description=\"\
+      Summary of the position sizing rules and risk allocation logic\")\n    )\n \
+      \   execution_protocols: str = (\n        Field(..., description=\"Overview\
+      \ of order execution tactics, including order types and routing preferences\"\
+      )\n    )\n    framework_summary: str = (\n        Field(..., description=\"\
+      Full 250-word description combining all elements of the framework\")\n    )\n\
+      \n\nclass CompileStrategyDocumentationOutput(BaseModel):\n    \"\"\"Pydantic\
+      \ model for compile_strategy_documentation node outputs.\"\"\"\n    investment_thesis:\
+      \ str = (\n        Field(..., description=\"A concise 200\\u2011word description\
+      \ of the investment thesis behind the strategy\")\n    )\n    signal_generation_flowchart:\
+      \ str = (\n        Field(..., description=\"Markdown or textual representation\
+      \ of the flowchart describing the signal generation methodology\")\n    )\n\
+      \    risk_controls_table: str = (\n        Field(..., description=\"Formatted\
+      \ table (as markdown text) listing risk control rules and their definitions\"\
+      )\n    )\n    parameter_ranges: str = (\n        Field(..., description=\"Description\
+      \ of key model and execution parameters with recommended ranges\")\n    )\n\
+      \    performance_summary_table: str = (\n        Field(..., description=\"Markdown\
+      \ table summarizing performance metrics (e.g., annualized return, Sharpe, drawdown)\
+      \ for baseline and optimized models\")\n    )\n    system_requirements: str\
+      \ = (\n        Field(..., description=\"List of hardware, software, and operational\
+      \ requirements needed to run the strategy\")\n    )\n\n\ndef compile_strategy_documentation(calculate_performance_metrics_input:\
+      \ CalculatePerformanceMetricsOutput, define_strategy_framework_input: DefineStrategyFrameworkOutput,\
+      \ **kwargs) -> CompileStrategyDocumentationOutput:\n    \"\"\"\n    Generate\
+      \ a full strategy documentation package from framework and\n    performance\
+      \ data.\n\n    Returns\n    -------\n    dict\n        A dictionary containing\
+      \ the six documentation sections defined in\n        the output_structure.\n\
+      \n    Raises\n    ------\n    KeyError\n        If required fields from parent\
+      \ nodes are missing.\n    ValueError\n        If any generated section exceeds\
+      \ its length or formatting\n        constraints.\n\n    Examples\n    --------\n\
+      \    >>> doc = compile_strategy_documentation()\n    >>> print(doc['investment_thesis'])\n\
+      \    >>> print(doc['performance_summary_table'])\n    A concise 200‑word investment\
+      \ thesis describing the market inefficiency the\n    strategy exploits...\\\
+      n| Metric                | Baseline | Optimized\n    |\\n|----------------------|----------|-----------|\\\
+      n| Annualized Return    |\n    0.12     | 0.18      |\\n| Sharpe Ratio     \
+      \    | 1.4      | 2.1       |\\n|\n    Max Drawdown         | -0.08    | -0.05\
+      \     |\n\n    >>> doc = compile_strategy_documentation()\n    >>> assert isinstance(doc['signal_generation_flowchart'],\
+      \ str)\n    >>> assert doc['system_requirements'].startswith('Hardware')\n \
+      \   True\n\n    \"\"\"\n    return CompileStrategyDocumentationOutput(\n   \
+      \     investment_thesis=\"\",\n        signal_generation_flowchart=\"\",\n \
+      \       risk_controls_table=\"\",\n        parameter_ranges=\"\",\n        performance_summary_table=\"\
+      \",\n        system_requirements=\"\",\n    )"
     name: compile_strategy_documentation
     nodes_depended_on:
     - calculate_performance_metrics
@@ -569,11 +1094,85 @@ nodes:
     prompt: 'Document the quantitative strategy with: 1) Investment thesis (200 words),
       2) Signal generation methodology (flowchart), 3) Risk controls (rules table),
       4) Parameter ranges, 5) Performance summary (table), 6) System requirements.'
+    shims: []
   create_liquidity_control_rules:
     agent: false
+    code_node_type: stub
     description: Develop adaptive liquidity management protocols that adjust trade
       size, order type, and batch execution based on order‑book depth, market volatility,
       and time‑of‑day regimes.
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass DefineStrategyFrameworkOutput(BaseModel):\n    \"\"\"Pydantic model\
+      \ for define_strategy_framework node outputs.\"\"\"\n    strategy_type: str\
+      \ = (\n        Field(..., description=\"High-level category of the strategy\
+      \ (e.g., statistical arbitrage, trend following, mean reversion)\")\n    )\n\
+      \    defining_characteristics: List[str] = (\n        Field(..., description=\"\
+      3-5 concise bullet points that capture the core attributes of the strategy\"\
+      )\n    )\n    signal_generation_methodology: str = (\n        Field(..., description=\"\
+      Brief description of how trading signals are generated within the framework\"\
+      )\n    )\n    position_sizing_approach: str = (\n        Field(..., description=\"\
+      Summary of the position sizing rules and risk allocation logic\")\n    )\n \
+      \   execution_protocols: str = (\n        Field(..., description=\"Overview\
+      \ of order execution tactics, including order types and routing preferences\"\
+      )\n    )\n    framework_summary: str = (\n        Field(..., description=\"\
+      Full 250-word description combining all elements of the framework\")\n    )\n\
+      \n\nclass AnalyzeMarketStructureOutput(BaseModel):\n    \"\"\"Pydantic model\
+      \ for analyze_market_structure node outputs.\"\"\"\n    participation_rates:\
+      \ List[float] = (\n        Field(..., description=\"Calculated participation\
+      \ rates for each time interval (as percentages expressed in decimal form).\"\
+      )\n    )\n    slippage_estimates: List[float] = (\n        Field(..., description=\"\
+      Estimated slippage values (price impact) for representative trade sizes, expressed\
+      \ in price units.\")\n    )\n    latency_sensitivity: List[float] = (\n    \
+      \    Field(..., description=\"Measured sensitivity of execution cost to latency,\
+      \ expressed as cost increase per millisecond.\")\n    )\n    day_of_week_patterns:\
+      \ List[str] = (\n        Field(..., description=\"Descriptive identifiers of\
+      \ recurring market depth patterns observed for each day of the week (e.g., \\\
+      \"Monday high liquidity\\\", \\\"Friday low depth\\\").\")\n    )\n    time_of_day_patterns:\
+      \ List[str] = (\n        Field(..., description=\"Descriptive identifiers of\
+      \ recurring market depth patterns observed for major time-of-day windows.\"\
+      )\n    )\n    summary_report: str = (\n        Field(..., description=\"Narrative\
+      \ summary of the market structure analysis, highlighting key regimes and actionable\
+      \ insights.\")\n    )\n\n\nclass CreateLiquidityControlRulesOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for create_liquidity_control_rules node outputs.\"\
+      \"\"\n    rule_names: List[str] = (\n        Field(..., description=\"Identifiers\
+      \ for each liquidity control rule\")\n    )\n    depth_thresholds: List[float]\
+      \ = (\n        Field(..., description=\"Depth\\u2011of\\u2011book thresholds\
+      \ (e.g., minimum available volume) for each rule\")\n    )\n    volatility_thresholds:\
+      \ List[float] = (\n        Field(..., description=\"Volatility levels (e.g.,\
+      \ standard deviation of recent price changes) that trigger the rule\")\n   \
+      \ )\n    time_of_day_windows: List[str] = (\n        Field(..., description=\"\
+      Time\\u2011of\\u2011day regimes (e.g., \\\"09:30-11:00\\\", \\\"15:00-16:00\\\
+      \") applicable to each rule\")\n    )\n    order_type: List[str] = (\n     \
+      \   Field(..., description=\"Order execution type for each rule (e.g., \\\"\
+      market\\\", \\\"limit\\\")\")\n    )\n    batch_execution_flags: List[bool]\
+      \ = (\n        Field(..., description=\"Whether batch execution is enabled for\
+      \ each rule\")\n    )\n    rule_descriptions: List[str] = (\n        Field(...,\
+      \ description=\"Human\\u2011readable description of each liquidity control rule\"\
+      )\n    )\n\n\ndef create_liquidity_control_rules(define_strategy_framework_input:\
+      \ DefineStrategyFrameworkOutput, analyze_market_structure_input: AnalyzeMarketStructureOutput,\
+      \ **kwargs) -> CreateLiquidityControlRulesOutput:\n    \"\"\"\n    Generate\
+      \ a list of adaptive liquidity‑control rules based on strategy\n    specifications\
+      \ and market‑structure insights.\n\n    Returns\n    -------\n    dict\n   \
+      \     Dictionary containing seven parallel lists (rule_names,\n        depth_thresholds,\
+      \ volatility_thresholds, time_of_day_windows,\n        order_type, batch_execution_flags,\
+      \ rule_descriptions) where each\n        index defines a complete rule.\n\n\
+      \    Raises\n    ------\n    ValueError\n        If the derived rule lists have\
+      \ mismatched lengths or contain invalid\n        values (e.g., negative thresholds,\
+      \ unsupported order types).\n\n    Examples\n    --------\n    >>> rules = create_liquidity_control_rules()\n\
+      \    >>> rules['rule_names']\n    >>> rules['order_type']\n    [\"high_liquidity_market\"\
+      , \"low_volatility_limit\"]\\n[\"market\", \"limit\"]\n\n    >>> # Inspect the\
+      \ first rule\n    >>> print({\n    ...     \"name\": rules['rule_names'][0],\n\
+      \    ...     \"depth_thr\": rules['depth_thresholds'][0],\n    ...     \"vol_thr\"\
+      : rules['volatility_thresholds'][0],\n    ...     \"time_window\": rules['time_of_day_windows'][0],\n\
+      \    ...     \"order\": rules['order_type'][0],\n    ...     \"batch\": rules['batch_execution_flags'][0],\n\
+      \    ...     \"desc\": rules['rule_descriptions'][0]\n    >>> })\n    {'name':\
+      \ 'high_liquidity_market', 'depth_thr': 50000.0, 'vol_thr': 0.02,\n    'time_window':\
+      \ '09:30-11:00', 'order': 'market', 'batch': True, 'desc': 'Use\n    market\
+      \ orders and batch execution when depth exceeds 50k contracts and\n    volatility\
+      \ is below 2% during the opening session.'}\n\n    \"\"\"\n    return CreateLiquidityControlRulesOutput(\n\
+      \        rule_names=[],\n        depth_thresholds=[],\n        volatility_thresholds=[],\n\
+      \        time_of_day_windows=[],\n        order_type=[],\n        batch_execution_flags=[],\n\
+      \        rule_descriptions=[],\n    )"
     name: create_liquidity_control_rules
     nodes_depended_on:
     - define_strategy_framework
@@ -647,9 +1246,66 @@ nodes:
     prompt: Formulate rules that adjust trade size based on depth-of-book, volatility,
       and time-of-day regimes. Include explicit threshold values for switching between
       market/limit orders and batch execution.
+    shims: []
   define_strategy_framework:
     agent: false
+    code_node_type: stub
     description: Establish quantitative strategy architecture
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass DefineStrategyFrameworkOutput(BaseModel):\n    \"\"\"Pydantic model\
+      \ for define_strategy_framework node outputs.\"\"\"\n    strategy_type: str\
+      \ = (\n        Field(..., description=\"High-level category of the strategy\
+      \ (e.g., statistical arbitrage, trend following, mean reversion)\")\n    )\n\
+      \    defining_characteristics: List[str] = (\n        Field(..., description=\"\
+      3-5 concise bullet points that capture the core attributes of the strategy\"\
+      )\n    )\n    signal_generation_methodology: str = (\n        Field(..., description=\"\
+      Brief description of how trading signals are generated within the framework\"\
+      )\n    )\n    position_sizing_approach: str = (\n        Field(..., description=\"\
+      Summary of the position sizing rules and risk allocation logic\")\n    )\n \
+      \   execution_protocols: str = (\n        Field(..., description=\"Overview\
+      \ of order execution tactics, including order types and routing preferences\"\
+      )\n    )\n    framework_summary: str = (\n        Field(..., description=\"\
+      Full 250-word description combining all elements of the framework\")\n    )\n\
+      \n\ndef define_strategy_framework(general_input: str, **kwargs) -> DefineStrategyFrameworkOutput:\n\
+      \    \"\"\"\n    Generate a complete quantitative strategy framework description.\n\
+      \n    Returns\n    -------\n    dict\n        Dictionary containing six keys:\
+      \ strategy_type (str),\n        defining_characteristics (List[str]), signal_generation_methodology\n\
+      \        (str), position_sizing_approach (str), execution_protocols (str),\n\
+      \        and framework_summary (str).\n\n    Raises\n    ------\n    RuntimeError\n\
+      \        If internal logic fails to produce any of the required output\n   \
+      \     fields.\n\n    Examples\n    --------\n    >>> framework = define_strategy_framework()\n\
+      \    >>> print(framework['strategy_type'])\n    >>> print(framework['defining_characteristics'])\n\
+      \    >>> print(framework['framework_summary'][:60])  # first 60 chars\n    statistical_arbitrage\n\
+      \    ['Mean‑reversion of mispricings', 'High‑frequency execution', 'Risk‑scaled\n\
+      \    exposure']\n    'Statistical arbitrage strategy that exploits short‑term\
+      \ price deviations\n    ...'\n\n    >>> framework = define_strategy_framework()\n\
+      \    >>> for key, value in framework.items():\n    ...     print(f\"{key}: {value}\"\
+      )\n    strategy_type: statistical_arbitrage\n    \"\n                      \
+      \      + \"defining_characteristics: ['Mean‑reversion of\n    mispricings',\
+      \ 'High‑frequency execution', 'Risk‑scaled exposure']\n    \"\n            \
+      \                + \"signal_generation_methodology: Signals are\n    generated\
+      \ by applying a linear regression model to a ranked set of\n    liquidity‑adjusted\
+      \ features and triggering entry when the predicted residual\n    exceeds a dynamic\
+      \ threshold.\n    \"\n                            + \"position_sizing_approach:\
+      \ Position size is\n    proportional to the inverse of recent realized volatility,\
+      \ capped by a\n    VaR‑based max exposure and adjusted for available order‑book\
+      \ depth.\n    \"\n                            + \"execution_protocols: Uses\
+      \ a hybrid market/limit\n    order strategy routed through low‑latency gateways,\
+      \ with batch slicing\n    during high‑impact windows.\n    \"\n            \
+      \                + \"framework_summary: Statistical arbitrage strategy\n   \
+      \ that exploits short‑term price deviations across correlated futures\n    contracts.\
+      \ Signals are derived from a regression‑based model that ingests\n    liquidity‑adjusted\
+      \ features such as order‑book imbalance, recent price\n    momentum, and macro‑factor\
+      \ spreads. Positions are sized using a\n    volatility‑scaled multiplier, constrained\
+      \ by portfolio VaR limits and\n    real‑time depth thresholds. Execution combines\
+      \ aggressive market orders for\n    small, high‑confidence signals and passive\
+      \ limit orders with price‑time\n    priority for larger exposures, routed through\
+      \ the nearest exchange gateway\n    to minimize latency. The framework emphasizes\
+      \ tight risk controls, adaptive\n    sizing, and robust back‑testing across\
+      \ multiple market regimes.\n\n    \"\"\"\n    return DefineStrategyFrameworkOutput(\n\
+      \        strategy_type=\"\",\n        defining_characteristics=[],\n       \
+      \ signal_generation_methodology=\"\",\n        position_sizing_approach=\"\"\
+      ,\n        execution_protocols=\"\",\n        framework_summary=\"\",\n    )"
     name: define_strategy_framework
     nodes_depended_on: []
     nodes_dependent_on: []
@@ -738,9 +1394,97 @@ nodes:
     prompt: Formulate a quantitative framework specifying strategy type (stat arb,
       trend following, etc.), signal generation methodology, position sizing, and
       execution protocols. Limit description to 250 words with 3-5 defining characteristics.
+    shims: []
   design_position_sizing_rules:
     agent: false
+    code_node_type: stub
     description: Create dynamic capital allocation methodology
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass CalculateStatisticalMetricsOutput(BaseModel):\n    \"\"\"Pydantic\
+      \ model for calculate_statistical_metrics node outputs.\"\"\"\n    contract_series:\
+      \ List[str] = (\n        Field(..., description=\"Identifiers of futures contract\
+      \ series for which metrics are calculated\")\n    )\n    daily_return_mean:\
+      \ List[float] = (\n        Field(..., description=\"Mean daily return for each\
+      \ contract series\")\n    )\n    daily_return_std: List[float] = (\n       \
+      \ Field(..., description=\"Standard deviation of daily returns for each contract\
+      \ series\")\n    )\n    weekly_return_mean: List[float] = (\n        Field(...,\
+      \ description=\"Mean weekly return for each contract series\")\n    )\n    weekly_return_std:\
+      \ List[float] = (\n        Field(..., description=\"Standard deviation of weekly\
+      \ returns for each contract series\")\n    )\n    monthly_return_mean: List[float]\
+      \ = (\n        Field(..., description=\"Mean monthly return for each contract\
+      \ series\")\n    )\n    monthly_return_std: List[float] = (\n        Field(...,\
+      \ description=\"Standard deviation of monthly returns for each contract series\"\
+      )\n    )\n    volatility_clustering_metric: List[float] = (\n        Field(...,\
+      \ description=\"Metric quantifying volatility clustering for each contract series\"\
+      )\n    )\n    skewness: List[float] = (\n        Field(..., description=\"Skewness\
+      \ of return distribution for each contract series\")\n    )\n    kurtosis: List[float]\
+      \ = (\n        Field(..., description=\"Kurtosis of return distribution for\
+      \ each contract series\")\n    )\n    time_weighted_summary: str = (\n     \
+      \   Field(..., description=\"Human\\u2011readable summary of the statistical\
+      \ metrics, weighted by observation time\")\n    )\n\n\nclass CreateLiquidityControlRulesOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for create_liquidity_control_rules node outputs.\"\
+      \"\"\n    rule_names: List[str] = (\n        Field(..., description=\"Identifiers\
+      \ for each liquidity control rule\")\n    )\n    depth_thresholds: List[float]\
+      \ = (\n        Field(..., description=\"Depth\\u2011of\\u2011book thresholds\
+      \ (e.g., minimum available volume) for each rule\")\n    )\n    volatility_thresholds:\
+      \ List[float] = (\n        Field(..., description=\"Volatility levels (e.g.,\
+      \ standard deviation of recent price changes) that trigger the rule\")\n   \
+      \ )\n    time_of_day_windows: List[str] = (\n        Field(..., description=\"\
+      Time\\u2011of\\u2011day regimes (e.g., \\\"09:30-11:00\\\", \\\"15:00-16:00\\\
+      \") applicable to each rule\")\n    )\n    order_type: List[str] = (\n     \
+      \   Field(..., description=\"Order execution type for each rule (e.g., \\\"\
+      market\\\", \\\"limit\\\")\")\n    )\n    batch_execution_flags: List[bool]\
+      \ = (\n        Field(..., description=\"Whether batch execution is enabled for\
+      \ each rule\")\n    )\n    rule_descriptions: List[str] = (\n        Field(...,\
+      \ description=\"Human\\u2011readable description of each liquidity control rule\"\
+      )\n    )\n\n\nclass DesignPositionSizingRulesOutput(BaseModel):\n    \"\"\"\
+      Pydantic model for design_position_sizing_rules node outputs.\"\"\"\n    position_sizing_algorithm:\
+      \ str = (\n        Field(..., description=\"High\\u2011level description of\
+      \ the position sizing methodology in natural language\")\n    )\n    sizing_rules:\
+      \ List[str] = (\n        Field(..., description=\"List of explicit rule expressions\
+      \ or formulas used to compute position size\")\n    )\n    volatility_multiplier:\
+      \ float = (\n        Field(..., description=\"Multiplier applied to base risk\
+      \ based on realized volatility\")\n    )\n    liquidity_adjustment_factor: float\
+      \ = (\n        Field(..., description=\"Factor that scales position size according\
+      \ to liquidity conditions (e.g., depth\\u2011of\\u2011book, spread)\")\n   \
+      \ )\n    confidence_threshold: float = (\n        Field(..., description=\"\
+      Minimum signal confidence level required to take a position\")\n    )\n    var_constraint:\
+      \ float = (\n        Field(..., description=\"Maximum allowed Value\\u2011at\\\
+      u2011Risk (VaR) expressed as a percentage of portfolio equity\")\n    )\n  \
+      \  margin_requirement: float = (\n        Field(..., description=\"Margin requirement\
+      \ per contract as a percentage of notional exposure\")\n    )\n    notes: str\
+      \ = (\n        Field(..., description=\"Additional remarks, assumptions, or\
+      \ implementation considerations\")\n    )\n\n\ndef design_position_sizing_rules(calculate_statistical_metrics_input:\
+      \ CalculateStatisticalMetricsOutput, create_liquidity_control_rules_input: CreateLiquidityControlRulesOutput,\
+      \ **kwargs) -> DesignPositionSizingRulesOutput:\n    \"\"\"\n    Generate a\
+      \ full position‑sizing specification using statistical metrics and\n    liquidity\
+      \ control rules.\n\n    Parameters\n    ----------\n    statistical_metrics\
+      \ : dict\n        Dictionary returned by `calculate_statistical_metrics` containing\n\
+      \        volatility and distribution statistics for each futures contract.\n\
+      \    liquidity_rules : dict\n        Dictionary returned by `create_liquidity_control_rules`\
+      \ describing\n        depth‑of‑book and volatility thresholds for trade‑size\
+      \ adjustments.\n\n    Returns\n    -------\n    dict\n        Dictionary matching\
+      \ the node's output_structure keys with the\n        computed values.\n\n  \
+      \  Raises\n    ------\n    KeyError\n        If required keys are missing from\
+      \ the input dictionaries.\n    ValueError\n        If any input values are out\
+      \ of realistic bounds (e.g., negative\n        volatility).\n\n    Examples\n\
+      \    --------\n    >>> stat_metrics = {\n    ...     'volatility_clustering_metric':\
+      \ [0.12, 0.15],\n    ...     'daily_return_std': [0.008, 0.010]\n    >>> }\n\
+      \    >>> liq_rules = {\n    ...     'depth_thresholds': [1000, 2000],\n    ...\
+      \     'volatility_thresholds': [0.02, 0.03]\n    >>> }\n    >>> result = design_position_sizing_rules(stat_metrics,\
+      \ liq_rules)\n    {\n      'position_sizing_algorithm': 'Volatility‑adjusted,\
+      \ liquidity‑aware sizing\n    with confidence and risk caps.',\n      'sizing_rules':\
+      \ [\n        'base_size = risk_cap / (volatility * volatility_multiplier)',\n\
+      \        'size *= liquidity_adjustment_factor if depth >= depth_threshold',\n\
+      \        \"size = 0 if signal_confidence < confidence_threshold\"\n      ],\n\
+      \      'volatility_multiplier': 1.5,\n      'liquidity_adjustment_factor': 0.8,\n\
+      \      'confidence_threshold': 0.7,\n      'var_constraint': 0.02,\n      'margin_requirement':\
+      \ 0.1,\n      'notes': 'Volatility multiplier derived from average daily_return_std;\n\
+      \    liquidity factor calibrated from depth thresholds.'\n    }\n\n    \"\"\"\
+      \n    return DesignPositionSizingRulesOutput(\n        position_sizing_algorithm=\"\
+      \",\n        sizing_rules=[],\n        volatility_multiplier=0.0,\n        liquidity_adjustment_factor=0.0,\n\
+      \        confidence_threshold=0.0,\n        var_constraint=0.0,\n        margin_requirement=0.0,\n\
+      \        notes=\"\",\n    )"
     name: design_position_sizing_rules
     nodes_depended_on:
     - calculate_statistical_metrics
@@ -826,9 +1570,78 @@ nodes:
     prompt: Design position sizing algorithm that adjusts risk exposure based on realized
       volatility, liquidity conditions, and confidence level in signals. Include VaR
       constraints and margin requirements.
+    shims: []
   feature_engineering:
     agent: false
+    code_node_type: stub
     description: Create predictive features from raw data
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass ProcessHistoricalDataOutput(BaseModel):\n    \"\"\"Pydantic model\
+      \ for process_historical_data node outputs.\"\"\"\n    cleaned_data_csv: str\
+      \ = (\n        Field(..., description=\"CSV formatted string of the cleaned\
+      \ dataset, including header row with columns such as timestamp, open, high,\
+      \ low, close, volume, open_interest\")\n    )\n    record_count: int = (\n \
+      \       Field(..., description=\"Number of rows/records in the cleaned dataset\"\
+      )\n    )\n    start_timestamp: str = (\n        Field(..., description=\"ISO8601\
+      \ timestamp of the first record in the cleaned dataset\")\n    )\n    end_timestamp:\
+      \ str = (\n        Field(..., description=\"ISO8601 timestamp of the last record\
+      \ in the cleaned dataset\")\n    )\n    time_interval_minutes: int = (\n   \
+      \     Field(..., description=\"Uniform time interval in minutes between consecutive\
+      \ records in the cleaned dataset\")\n    )\n    is_successful: bool = (\n  \
+      \      Field(..., description=\"Indicates whether the cleaning and normalization\
+      \ process completed without errors\")\n    )\n\n\nclass IdentifyRiskFactorsOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for identify_risk_factors node outputs.\"\"\"\n  \
+      \  risk_factors: List[str] = (\n        Field(..., description=\"List of identified\
+      \ risk factor names (e.g., \\\"Interest Rates\\\", \\\"Crude Oil Prices\\\"\
+      )\")\n    )\n    risk_factor_categories: List[str] = (\n        Field(..., description=\"\
+      Parallel list indicating the category for each risk factor in risk_factors;\
+      \ each entry is one of \\\"price driver\\\", \\\"volatility factor\\\", or \\\
+      \"liquidity risk\\\"\")\n    )\n\n\nclass FeatureEngineeringOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for feature_engineering node outputs.\"\"\"\n    feature_names:\
+      \ List[str] = (\n        Field(..., description=\"List of generated feature\
+      \ names (e.g., \\\"rsi_14\\\", \\\"macd_hist\\\", \\\"vol_surface_30d\\\")\"\
+      )\n    )\n    feature_descriptions: List[str] = (\n        Field(..., description=\"\
+      Brief description of each feature corresponding to the order in feature_names\"\
+      )\n    )\n    feature_importance_scores: List[float] = (\n        Field(...,\
+      \ description=\"Numerical importance scores for each feature as derived from\
+      \ ranking techniques (higher = more predictive)\")\n    )\n    selected_feature_names:\
+      \ List[str] = (\n        Field(..., description=\"Subset of feature_names that\
+      \ are identified as the strongest candidates based on importance scores\")\n\
+      \    )\n    selected_feature_importance: List[float] = (\n        Field(...,\
+      \ description=\"Importance scores corresponding to the selected_feature_names\"\
+      )\n    )\n\n\ndef feature_engineering(process_historical_data_input: ProcessHistoricalDataOutput,\
+      \ identify_risk_factors_input: IdentifyRiskFactorsOutput, **kwargs) -> FeatureEngineeringOutput:\n\
+      \    \"\"\"\n    Generate engineered predictive features from cleaned futures\
+      \ data and macro\n    risk factors, and rank them by predictive importance.\n\
+      \n    Parameters\n    ----------\n    cleaned_data_csv : str\n        CSV string\
+      \ containing the cleaned, uniformly‑spaced futures price\n        and volume\
+      \ series produced by `process_historical_data`.\n    risk_factors : List[str]\n\
+      \        List of macro‑economic or market risk factor names identified by\n\
+      \        `identify_risk_factors`.\n    risk_factor_categories : List[str]\n\
+      \        Parallel list indicating each risk factor's category (\"price\n   \
+      \     driver\", \"volatility factor\", or \"liquidity risk\").\n\n    Returns\n\
+      \    -------\n    dict\n        Dictionary with keys `feature_names`, `feature_descriptions`,\n\
+      \        `feature_importance_scores`, `selected_feature_names`, and\n      \
+      \  `selected_feature_importance` matching the node's output_structure.\n\n \
+      \   Raises\n    ------\n    ValueError\n        If the CSV cannot be parsed\
+      \ or required columns are missing.\n    RuntimeError\n        If feature ranking\
+      \ fails due to insufficient data or singular matrix\n        errors.\n\n   \
+      \ Examples\n    --------\n    >>> cleaned_csv =\n    \"timestamp,open,high,low,close,volume,open_interest\\\
+      n2023-01-01\n    09:30,100,101,99,100.5,5000,10\\n2023-01-01 09:31,100.5,102,100,101,5200,10\"\
+      \n    >>> risk_factors = [\"Interest Rates\", \"Crude Oil Prices\"]\n    >>>\
+      \ risk_factor_categories = [\"price driver\", \"price driver\"]\n    >>> features\
+      \ = feature_engineering(cleaned_csv, risk_factors,\n    risk_factor_categories)\n\
+      \    {\n      'feature_names': ['rsi_14', 'macd_hist', 'vol_surface_30d', ...],\n\
+      \      'feature_descriptions': ['14‑period Relative Strength Index', 'MACD\n\
+      \    histogram', '30‑day implied volatility surface', ...],\n      'feature_importance_scores':\
+      \ [0.12, 0.09, 0.15, ...],\n      'selected_feature_names': ['vol_surface_30d',\
+      \ 'rsi_14',\n    'macro_spread_interest_crude'],\n      'selected_feature_importance':\
+      \ [0.15, 0.12, 0.11]\n    }\n\n    >>> # When the input CSV is empty, the function\
+      \ raises an informative error\n    >>> feature_engineering('', [], [])\n   \
+      \ ValueError: Input CSV is empty or missing required columns.\n\n    \"\"\"\n\
+      \    return FeatureEngineeringOutput(\n        feature_names=[],\n        feature_descriptions=[],\n\
+      \        feature_importance_scores=[],\n        selected_feature_names=[],\n\
+      \        selected_feature_importance=[],\n    )"
     name: feature_engineering
     nodes_depended_on:
     - process_historical_data
@@ -906,9 +1719,37 @@ nodes:
     prompt: 'Generate 20-30 predictive features including: technical indicators (RSI,
       MACD), volatility surfaces, momentum factors, liquidity ratios, and macroeconomic
       spreads. Apply feature ranking techniques to identify strongest candidates.'
+    shims: []
   identify_risk_factors:
     agent: false
+    code_node_type: stub
     description: Determine macroeconomic and market risk factors affecting futures
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass IdentifyRiskFactorsOutput(BaseModel):\n    \"\"\"Pydantic model for\
+      \ identify_risk_factors node outputs.\"\"\"\n    risk_factors: List[str] = (\n\
+      \        Field(..., description=\"List of identified risk factor names (e.g.,\
+      \ \\\"Interest Rates\\\", \\\"Crude Oil Prices\\\")\")\n    )\n    risk_factor_categories:\
+      \ List[str] = (\n        Field(..., description=\"Parallel list indicating the\
+      \ category for each risk factor in risk_factors; each entry is one of \\\"price\
+      \ driver\\\", \\\"volatility factor\\\", or \\\"liquidity risk\\\"\")\n    )\n\
+      \n\ndef identify_risk_factors(general_input: str, **kwargs) -> IdentifyRiskFactorsOutput:\n\
+      \    \"\"\"\n    Identify key risk factors for futures trading and classify\
+      \ each factor.\n\n    Returns\n    -------\n    Tuple[List[str], List[str]]\n\
+      \        A tuple where the first element is a list of risk factor names and\n\
+      \        the second element is a parallel list of categories (\"price driver\"\
+      ,\n        \"volatility factor\", or \"liquidity risk\").\n\n    Raises\n  \
+      \  ------\n    RuntimeError\n        If the underlying language model fails\
+      \ to produce a parsable list of\n        factors or categories.\n    ValueError\n\
+      \        If the lengths of the two returned lists differ.\n\n    Examples\n\
+      \    --------\n    >>> risk_factors, categories = identify_risk_factors()\n\
+      \    (['Interest Rates', 'Crude Oil Prices', 'USD/EUR Exchange Rate', 'VIX\n\
+      \    Index', 'Gold Spot Price', 'Eurodollar Futures', 'Natural Gas Futures',\
+      \ 'S&P\n    500 Futures'],\n     ['price driver', 'price driver', 'price driver',\
+      \ 'volatility factor',\n    'price driver', 'liquidity risk', 'liquidity risk',\
+      \ 'price driver'])\n\n    >>> risk_factors, categories = identify_risk_factors()\n\
+      \    >>> print(risk_factors[2])\n    >>> print(categories[2])\n    \"USD/EUR\
+      \ Exchange Rate\"\n    \"price driver\"\n\n    \"\"\"\n    return IdentifyRiskFactorsOutput(\n\
+      \        risk_factors=[],\n        risk_factor_categories=[],\n    )"
     name: identify_risk_factors
     nodes_depended_on: []
     nodes_dependent_on: []
@@ -959,12 +1800,118 @@ nodes:
     prompt: List 8-12 relevant risk factors for futures trading (e.g., interest rates,
       commodity prices, macroeconomic indicators). Categorize each as either price
       drivers, volatility factors, or liquidity risks.
+    shims: []
   model_regression_based_strategy:
     agent: false
+    code_node_type: stub
     description: Construct statistical arbitrage models for predictive signals using
       engineered features, market structure insights, and statistical metrics. Generates
       multiple regularized regression models, evaluates out‑of‑sample performance,
       and selects the best model with documented coefficient significance.
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass CalculateStatisticalMetricsOutput(BaseModel):\n    \"\"\"Pydantic\
+      \ model for calculate_statistical_metrics node outputs.\"\"\"\n    contract_series:\
+      \ List[str] = (\n        Field(..., description=\"Identifiers of futures contract\
+      \ series for which metrics are calculated\")\n    )\n    daily_return_mean:\
+      \ List[float] = (\n        Field(..., description=\"Mean daily return for each\
+      \ contract series\")\n    )\n    daily_return_std: List[float] = (\n       \
+      \ Field(..., description=\"Standard deviation of daily returns for each contract\
+      \ series\")\n    )\n    weekly_return_mean: List[float] = (\n        Field(...,\
+      \ description=\"Mean weekly return for each contract series\")\n    )\n    weekly_return_std:\
+      \ List[float] = (\n        Field(..., description=\"Standard deviation of weekly\
+      \ returns for each contract series\")\n    )\n    monthly_return_mean: List[float]\
+      \ = (\n        Field(..., description=\"Mean monthly return for each contract\
+      \ series\")\n    )\n    monthly_return_std: List[float] = (\n        Field(...,\
+      \ description=\"Standard deviation of monthly returns for each contract series\"\
+      )\n    )\n    volatility_clustering_metric: List[float] = (\n        Field(...,\
+      \ description=\"Metric quantifying volatility clustering for each contract series\"\
+      )\n    )\n    skewness: List[float] = (\n        Field(..., description=\"Skewness\
+      \ of return distribution for each contract series\")\n    )\n    kurtosis: List[float]\
+      \ = (\n        Field(..., description=\"Kurtosis of return distribution for\
+      \ each contract series\")\n    )\n    time_weighted_summary: str = (\n     \
+      \   Field(..., description=\"Human\\u2011readable summary of the statistical\
+      \ metrics, weighted by observation time\")\n    )\n\n\nclass FeatureEngineeringOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for feature_engineering node outputs.\"\"\"\n    feature_names:\
+      \ List[str] = (\n        Field(..., description=\"List of generated feature\
+      \ names (e.g., \\\"rsi_14\\\", \\\"macd_hist\\\", \\\"vol_surface_30d\\\")\"\
+      )\n    )\n    feature_descriptions: List[str] = (\n        Field(..., description=\"\
+      Brief description of each feature corresponding to the order in feature_names\"\
+      )\n    )\n    feature_importance_scores: List[float] = (\n        Field(...,\
+      \ description=\"Numerical importance scores for each feature as derived from\
+      \ ranking techniques (higher = more predictive)\")\n    )\n    selected_feature_names:\
+      \ List[str] = (\n        Field(..., description=\"Subset of feature_names that\
+      \ are identified as the strongest candidates based on importance scores\")\n\
+      \    )\n    selected_feature_importance: List[float] = (\n        Field(...,\
+      \ description=\"Importance scores corresponding to the selected_feature_names\"\
+      )\n    )\n\n\nclass AnalyzeMarketStructureOutput(BaseModel):\n    \"\"\"Pydantic\
+      \ model for analyze_market_structure node outputs.\"\"\"\n    participation_rates:\
+      \ List[float] = (\n        Field(..., description=\"Calculated participation\
+      \ rates for each time interval (as percentages expressed in decimal form).\"\
+      )\n    )\n    slippage_estimates: List[float] = (\n        Field(..., description=\"\
+      Estimated slippage values (price impact) for representative trade sizes, expressed\
+      \ in price units.\")\n    )\n    latency_sensitivity: List[float] = (\n    \
+      \    Field(..., description=\"Measured sensitivity of execution cost to latency,\
+      \ expressed as cost increase per millisecond.\")\n    )\n    day_of_week_patterns:\
+      \ List[str] = (\n        Field(..., description=\"Descriptive identifiers of\
+      \ recurring market depth patterns observed for each day of the week (e.g., \\\
+      \"Monday high liquidity\\\", \\\"Friday low depth\\\").\")\n    )\n    time_of_day_patterns:\
+      \ List[str] = (\n        Field(..., description=\"Descriptive identifiers of\
+      \ recurring market depth patterns observed for major time-of-day windows.\"\
+      )\n    )\n    summary_report: str = (\n        Field(..., description=\"Narrative\
+      \ summary of the market structure analysis, highlighting key regimes and actionable\
+      \ insights.\")\n    )\n\n\nclass ModelRegressionBasedStrategyOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for model_regression_based_strategy node outputs.\"\
+      \"\"\n    model_names: List[str] = (\n        Field(..., description=\"Names\
+      \ or identifiers for each regression model generated\")\n    )\n    model_descriptions:\
+      \ List[str] = (\n        Field(..., description=\"Brief textual description\
+      \ of each model, including regularization method used\")\n    )\n    model_performance:\
+      \ List[float] = (\n        Field(..., description=\"Out-of-sample performance\
+      \ metric (e.g., R\\u00b2 or information ratio) for each model\")\n    )\n  \
+      \  selected_model_index: int = (\n        Field(..., description=\"Zero\\u2011based\
+      \ index of the model chosen as best performing\")\n    )\n    selected_model_coefficients:\
+      \ List[float] = (\n        Field(..., description=\"List of coefficient values\
+      \ for the selected model, ordered to match the feature list\")\n    )\n    selected_model_coefficient_names:\
+      \ List[str] = (\n        Field(..., description=\"Names of the features corresponding\
+      \ to each coefficient in the selected model\")\n    )\n    selected_model_significant:\
+      \ List[bool] = (\n        Field(..., description=\"Boolean flags indicating\
+      \ whether each coefficient in the selected model is statistically significant\"\
+      )\n    )\n\n\ndef model_regression_based_strategy(calculate_statistical_metrics_input:\
+      \ CalculateStatisticalMetricsOutput, feature_engineering_input: FeatureEngineeringOutput,\
+      \ analyze_market_structure_input: AnalyzeMarketStructureOutput, **kwargs) ->\
+      \ ModelRegressionBasedStrategyOutput:\n    \"\"\"\n    Builds and selects regression‑based\
+      \ predictive models for a statistical\n    arbitrage strategy.\n\n    Parameters\n\
+      \    ----------\n    features : dict\n        Dictionary containing feature\
+      \ engineering outputs:\n        'selected_feature_names' (List[str]) and\n \
+      \       'selected_feature_importance' (List[float]).\n    market_structure :\
+      \ dict\n        Outputs from analyze_market_structure needed for model context\n\
+      \        (e.g., participation_rates, slippage_estimates).\n    statistical_metrics\
+      \ : dict\n        Outputs from calculate_statistical_metrics such as\n     \
+      \   volatility_clustering_metric, skewness, kurtosis.\n    regularization_methods\
+      \ : List[str]\n        List of regularization techniques to apply (e.g., ['Lasso',\
+      \ 'Ridge',\n        'ElasticNet']).\n    out_of_sample_split : float\n     \
+      \   Proportion of data reserved for out‑of‑sample validation (0 < split\n  \
+      \      < 1).\n\n    Returns\n    -------\n    dict\n        Dictionary with\
+      \ keys matching the node's output_structure,\n        containing model identifiers,\
+      \ descriptions, performance metrics,\n        selected model index, coefficients,\
+      \ coefficient names, and\n        significance flags.\n\n    Raises\n    ------\n\
+      \    ValueError\n        If required input keys are missing or if out_of_sample_split\
+      \ is not\n        in (0,1).\n    RuntimeError\n        If model fitting fails\
+      \ for all specified regularization methods.\n\n    Examples\n    --------\n\
+      \    >>> outputs = model_regression_based_strategy(\n    ...     features={\n\
+      \    ...         'selected_feature_names': ['rsi_14', 'macd_hist',\n    'vol_surface_30d'],\n\
+      \    ...         'selected_feature_importance': [0.8, 0.6, 0.4]\n    ...   \
+      \  },\n    ...     market_structure={\n    ...         'participation_rates':\
+      \ [0.12, 0.15],\n    ...         'slippage_estimates': [0.0005, 0.0007]\n  \
+      \  ...     },\n    ...     statistical_metrics={\n    ...         'volatility_clustering_metric':\
+      \ [0.3],\n    ...         'skewness': [0.1],\n    ...         'kurtosis': [3.2]\n\
+      \    ...     },\n    ...     regularization_methods=['Lasso', 'Ridge'],\n  \
+      \  ...     out_of_sample_split=0.2\n    >>> )\n    >>> print(outputs['selected_model_index'])\n\
+      \    0\n\n    >>> print(outputs['model_names'])\n    >>> print(outputs['model_performance'])\n\
+      \    ['Lasso_Model', 'Ridge_Model']\\n[0.74, 0.71]\n\n    \"\"\"\n    return\
+      \ ModelRegressionBasedStrategyOutput(\n        model_names=[],\n        model_descriptions=[],\n\
+      \        model_performance=[],\n        selected_model_index=0,\n        selected_model_coefficients=[],\n\
+      \        selected_model_coefficient_names=[],\n        selected_model_significant=[],\n\
+      \    )"
     name: model_regression_based_strategy
     nodes_depended_on:
     - calculate_statistical_metrics
@@ -1068,9 +2015,60 @@ nodes:
     prompt: Develop 3-5 regression-based models using feature set to predict price
       movements. Apply regularization techniques and select best-performing model
       based on out-of-sample validation. Document coefficient significance.
+    shims: []
   optimize_model_parameters:
     agent: false
+    code_node_type: stub
     description: Refine model hyperparameters using robust methods
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass BacktestTradingSignalsOutput(BaseModel):\n    \"\"\"Pydantic model\
+      \ for backtest_trading_signals node outputs.\"\"\"\n    equity_curve: List[float]\
+      \ = (\n        Field(..., description=\"Time\\u2011series of portfolio equity\
+      \ values for each backtest period\")\n    )\n    sharpe_ratio: float = (\n \
+      \       Field(..., description=\"Annualized Sharpe ratio of the backtested strategy\"\
+      )\n    )\n    max_drawdown: float = (\n        Field(..., description=\"Maximum\
+      \ percentage drawdown observed across all walk\\u2011forward windows\")\n  \
+      \  )\n    annualized_return: float = (\n        Field(..., description=\"Overall\
+      \ annualized return percentage from the backtest\")\n    )\n    drawdown_duration_profile:\
+      \ List[int] = (\n        Field(..., description=\"List of drawdown durations\
+      \ (in days) for each observed drawdown event\")\n    )\n\n\nclass OptimizeModelParametersOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for optimize_model_parameters node outputs.\"\"\"\n\
+      \    optimal_signal_parameters: List[str] = (\n        Field(..., description=\"\
+      List of signal generation parameter settings in \\\"param=value\\\" format that\
+      \ achieved the best cross\\u2011validation performance\")\n    )\n    optimal_position_sizing_parameters:\
+      \ List[str] = (\n        Field(..., description=\"List of position sizing parameter\
+      \ settings in \\\"param=value\\\" format derived from the optimization\")\n\
+      \    )\n    cross_validation_score: float = (\n        Field(..., description=\"\
+      Aggregate performance metric (e.g., average Sharpe ratio) obtained during cross\\\
+      u2011validation for the selected parameters\")\n    )\n    walk_forward_consistency:\
+      \ bool = (\n        Field(..., description=\"Indicates whether the optimized\
+      \ parameters maintained performance across walk\\u2011forward windows\")\n \
+      \   )\n    parameter_ranges_documentation: str = (\n        Field(..., description=\"\
+      Markdown\\u2011formatted text summarizing the acceptable ranges for each tuned\
+      \ hyperparameter\")\n    )\n\n\ndef optimize_model_parameters(backtest_trading_signals_input:\
+      \ BacktestTradingSignalsOutput, **kwargs) -> OptimizeModelParametersOutput:\n\
+      \    \"\"\"\n    Optimize signal generation and position sizing hyper‑parameters\
+      \ via\n    cross‑validation and walk‑forward analysis.\n\n    Returns\n    -------\n\
+      \    dict\n        Dictionary containing keys `optimal_signal_parameters`,\n\
+      \        `optimal_position_sizing_parameters`, `cross_validation_score`,\n \
+      \       `walk_forward_consistency`, and `parameter_ranges_documentation` as\n\
+      \        defined in the node's output_structure.\n\n    Raises\n    ------\n\
+      \    RuntimeError\n        If the dependent backtest data is unavailable or\
+      \ fails validation.\n    ValueError\n        If the optimization process does\
+      \ not converge to a feasible\n        solution.\n\n    Examples\n    --------\n\
+      \    >>> results = optimize_model_parameters()\n    >>> print(results['optimal_signal_parameters'])\n\
+      \    >>> print(results['cross_validation_score'])\n    [\"lookback=20\", \"\
+      threshold=0.05\"]\\n0.82\n\n    >>> # Example of full result dictionary\n  \
+      \  >>> results = {\n    ...     \"optimal_signal_parameters\": [\"ma_fast=10\"\
+      , \"ma_slow=30\"],\n    ...     \"optimal_position_sizing_parameters\": [\"\
+      vol_multiplier=1.2\",\n    \"max_exposure=0.15\"],\n    ...     \"cross_validation_score\"\
+      : 0.87,\n    ...     \"walk_forward_consistency\": true,\n    ...     \"parameter_ranges_documentation\"\
+      : \"## Parameter Ranges\\n- ma_fast:\n    5‑15\\n- ma_slow: 20‑40\\n- vol_multiplier:\
+      \ 0.8‑1.5\\n- max_exposure: 0.1‑0.2\"\n    >>> }\n    >>> print(results['walk_forward_consistency'])\n\
+      \    True\n\n    \"\"\"\n    return OptimizeModelParametersOutput(\n       \
+      \ optimal_signal_parameters=[],\n        optimal_position_sizing_parameters=[],\n\
+      \        cross_validation_score=0.0,\n        walk_forward_consistency=False,\n\
+      \        parameter_ranges_documentation=\"\",\n    )"
     name: optimize_model_parameters
     nodes_depended_on:
     - backtest_trading_signals
@@ -1139,9 +2137,58 @@ nodes:
     prompt: Optimize signal generation and position sizing parameters using cross‑validation.
       Document optimal parameter ranges that pass out‑of‑sample tests. Focus on walk‑forward
       performance consistency.
+    shims: []
   process_historical_data:
     agent: false
+    code_node_type: stub
     description: Clean and normalize raw futures data for analysis
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass CollectHistoricalFutureDataOutput(BaseModel):\n    \"\"\"Pydantic\
+      \ model for collect_historical_future_data node outputs.\"\"\"\n    csv_rows:\
+      \ List[str] = (\n        Field(..., description=\"List of CSV-formatted rows,\
+      \ each row representing a timestamped record with fields: timestamp, contract_month,\
+      \ open, high, low, close, volume, open_interest\")\n    )\n    contracts: List[str]\
+      \ = (\n        Field(..., description=\"List of contract identifiers (e.g.,\
+      \ futures symbols and months) included in the collected dataset\")\n    )\n\
+      \    start_date: str = (\n        Field(..., description=\"Earliest date (inclusive)\
+      \ of the collected data in ISO 8601 format (YYYY-MM-DD)\")\n    )\n    end_date:\
+      \ str = (\n        Field(..., description=\"Latest date (inclusive) of the collected\
+      \ data in ISO 8601 format (YYYY-MM-DD)\")\n    )\n    row_count: int = (\n \
+      \       Field(..., description=\"Total number of data rows collected (excluding\
+      \ header)\")\n    )\n\n\nclass ProcessHistoricalDataOutput(BaseModel):\n   \
+      \ \"\"\"Pydantic model for process_historical_data node outputs.\"\"\"\n   \
+      \ cleaned_data_csv: str = (\n        Field(..., description=\"CSV formatted\
+      \ string of the cleaned dataset, including header row with columns such as timestamp,\
+      \ open, high, low, close, volume, open_interest\")\n    )\n    record_count:\
+      \ int = (\n        Field(..., description=\"Number of rows/records in the cleaned\
+      \ dataset\")\n    )\n    start_timestamp: str = (\n        Field(..., description=\"\
+      ISO8601 timestamp of the first record in the cleaned dataset\")\n    )\n   \
+      \ end_timestamp: str = (\n        Field(..., description=\"ISO8601 timestamp\
+      \ of the last record in the cleaned dataset\")\n    )\n    time_interval_minutes:\
+      \ int = (\n        Field(..., description=\"Uniform time interval in minutes\
+      \ between consecutive records in the cleaned dataset\")\n    )\n    is_successful:\
+      \ bool = (\n        Field(..., description=\"Indicates whether the cleaning\
+      \ and normalization process completed without errors\")\n    )\n\n\ndef process_historical_data(collect_historical_future_data_input:\
+      \ CollectHistoricalFutureDataOutput, **kwargs) -> ProcessHistoricalDataOutput:\n\
+      \    \"\"\"\n    Clean and normalize raw futures CSV rows into a continuous,\
+      \ regularly‑spaced\n    dataset.\n\n    Parameters\n    ----------\n    raw_csv_rows\
+      \ : List[str]\n        List of CSV‑formatted rows produced by\n        `collect_historical_future_data`.\
+      \ Each row contains: timestamp,\n        contract_month, open, high, low, close,\
+      \ volume, open_interest.\n\n    Returns\n    -------\n    dict\n        Dictionary\
+      \ containing cleaned_data_csv, record_count,\n        start_timestamp, end_timestamp,\
+      \ time_interval_minutes, and\n        is_successful as defined in the node's\
+      \ output structure.\n\n    Raises\n    ------\n    ValueError\n        If raw_csv_rows\
+      \ is empty or missing required columns.\n    RuntimeError\n        If the cleaning\
+      \ process cannot infer a uniform time interval or\n        fails during contract\
+      \ rollover stitching.\n\n    Examples\n    --------\n    >>> result = process_historical_data([\n\
+      \    ...     \"2020-01-01T09:30:00Z,2020F,100,101,99,100.5,2000,1500\",\n  \
+      \  ...     \"2020-01-01T09:31:00Z,2020F,100.5,102,100,101,2100,1520\"\n    >>>\
+      \ ])\n    >>> print(result['record_count'])\n    2\n\n    >>> result = process_historical_data(raw_csv_rows)\n\
+      \    >>> print(result['is_successful'])\n    >>> print(result['time_interval_minutes'])\n\
+      \    True\\n1\n\n    \"\"\"\n    return ProcessHistoricalDataOutput(\n     \
+      \   cleaned_data_csv=\"\",\n        record_count=0,\n        start_timestamp=\"\
+      \",\n        end_timestamp=\"\",\n        time_interval_minutes=0,\n       \
+      \ is_successful=False,\n    )"
     name: process_historical_data
     nodes_depended_on:
     - collect_historical_future_data
@@ -1210,12 +2257,81 @@ nodes:
     prompt: 'Clean raw futures data by: 1) Handling missing timestamps, 2) Adjusting
       for contract rollover, 3) Calculating continuous price series, 4) Normalizing
       volumes. Output cleaned dataset with consistent time intervals.'
+    shims: []
   validate_overfitting_risk:
     agent: false
+    code_node_type: stub
     description: Assess model robustness to different market regimes by stress‑testing
       the optimized parameters obtained from `optimize_model_parameters`. The node
       evaluates how performance degrades when the same parameters are applied to distinct
       market environments and flags regimes where over‑fitting is evident.
+    implementation: "from pydantic import BaseModel, Field\nfrom typing import List\n\
+      \n\nclass OptimizeModelParametersOutput(BaseModel):\n    \"\"\"Pydantic model\
+      \ for optimize_model_parameters node outputs.\"\"\"\n    optimal_signal_parameters:\
+      \ List[str] = (\n        Field(..., description=\"List of signal generation\
+      \ parameter settings in \\\"param=value\\\" format that achieved the best cross\\\
+      u2011validation performance\")\n    )\n    optimal_position_sizing_parameters:\
+      \ List[str] = (\n        Field(..., description=\"List of position sizing parameter\
+      \ settings in \\\"param=value\\\" format derived from the optimization\")\n\
+      \    )\n    cross_validation_score: float = (\n        Field(..., description=\"\
+      Aggregate performance metric (e.g., average Sharpe ratio) obtained during cross\\\
+      u2011validation for the selected parameters\")\n    )\n    walk_forward_consistency:\
+      \ bool = (\n        Field(..., description=\"Indicates whether the optimized\
+      \ parameters maintained performance across walk\\u2011forward windows\")\n \
+      \   )\n    parameter_ranges_documentation: str = (\n        Field(..., description=\"\
+      Markdown\\u2011formatted text summarizing the acceptable ranges for each tuned\
+      \ hyperparameter\")\n    )\n\n\nclass ValidateOverfittingRiskOutput(BaseModel):\n\
+      \    \"\"\"Pydantic model for validate_overfitting_risk node outputs.\"\"\"\n\
+      \    tested_regimes: List[str] = (\n        Field(..., description=\"Names of\
+      \ market regimes used in the stress test (e.g., bull, bear, high-volatility).\"\
+      )\n    )\n    degradation_scores: List[float] = (\n        Field(..., description=\"\
+      Quantitative measure of backtesting performance degradation for each regime\
+      \ (e.g., drop in Sharpe ratio).\")\n    )\n    affected_parameter_ranges: List[str]\
+      \ = (\n        Field(..., description=\"String representations of parameter\
+      \ ranges that led to significant performance drops in each regime.\")\n    )\n\
+      \    robustness_summary: str = (\n        Field(..., description=\"Brief textual\
+      \ summary indicating overall model robustness and any regimes of concern.\"\
+      )\n    )\n    is_robust: bool = (\n        Field(..., description=\"Flag indicating\
+      \ whether the model passes a predefined robustness criterion across all tested\
+      \ regimes.\")\n    )\n\n\ndef validate_overfitting_risk(optimize_model_parameters_input:\
+      \ OptimizeModelParametersOutput, **kwargs) -> ValidateOverfittingRiskOutput:\n\
+      \    \"\"\"\n    Stress‑tests optimized model parameters across multiple market\
+      \ regimes and\n    reports robustness metrics.\n\n    Parameters\n    ----------\n\
+      \    optimized_parameters : dict\n        Dictionary of parameter settings returned\
+      \ by\n        `optimize_model_parameters`. Keys are parameter names and values\
+      \ are\n        the selected values (e.g., {'signal_threshold': 0.45,\n     \
+      \   'position_scale': 1.2}).\n    regime_definitions : dict\n        Mapping\
+      \ of regime name to a callable that filters historical data to\n        that\
+      \ regime. Example: {'bull': bull_filter, 'bear': bear_filter,\n        ...}.\n\
+      \n    Returns\n    -------\n    dict\n        A dictionary containing the five\
+      \ output fields defined in\n        `output_structure`.\n\n    Raises\n    ------\n\
+      \    ValueError\n        If `optimized_parameters` is empty or missing required\
+      \ keys.\n    KeyError\n        If a requested regime is not present in `regime_definitions`.\n\
+      \    RuntimeError\n        If back‑testing fails for any regime due to data\
+      \ issues.\n\n    Examples\n    --------\n    >>> result = validate_overfitting_risk(\n\
+      \    ...     optimized_parameters={'signal_threshold': 0.48, 'position_scale':\n\
+      \    1.1},\n    ...     regime_definitions={\n    ...         'bull': bull_filter,\n\
+      \    ...         'bear': bear_filter,\n    ...         'high_vol': high_vol_filter,\n\
+      \    ...         'low_vol': low_vol_filter,\n    ...         'sideways': sideways_filter\n\
+      \    ...     }\n    >>> )\n    {'tested_regimes': ['bull', 'bear', 'high_vol',\
+      \ 'low_vol', 'sideways'],\n    'degradation_scores': [0.02, 0.15, 0.09, 0.03,\
+      \ 0.05],\n    'affected_parameter_ranges': ['signal_threshold: 0.30‑0.55',\n\
+      \    'position_scale: 0.8‑1.3', 'signal_threshold: 0.30‑0.55', 'position_scale:\n\
+      \    0.9‑1.2', 'signal_threshold: 0.35‑0.50'], 'robustness_summary': 'Model\n\
+      \    remains robust in bull, low_vol and sideways regimes (≤5% Sharpe drop)\
+      \ but\n    degrades in bear regime (15% drop).', 'is_robust': False}\n\n   \
+      \ >>> result = validate_overfitting_risk(\n    ...     optimized_parameters={'signal_threshold':\
+      \ 0.55, 'position_scale':\n    0.9},\n    ...     regime_definitions={'bull':\
+      \ bull_filter, 'bear': bear_filter,\n    'high_vol': high_vol_filter, 'low_vol':\
+      \ low_vol_filter, 'sideways':\n    sideways_filter}\n    >>> )\n    {'tested_regimes':\
+      \ ['bull', 'bear', 'high_vol', 'low_vol', 'sideways'],\n    'degradation_scores':\
+      \ [0.01, 0.04, 0.02, 0.01, 0.03],\n    'affected_parameter_ranges': ['signal_threshold:\
+      \ 0.50‑0.60',\n    'signal_threshold: 0.50‑0.60', 'signal_threshold: 0.50‑0.60',\n\
+      \    'signal_threshold: 0.50‑0.60', 'signal_threshold: 0.50‑0.60'],\n    'robustness_summary':\
+      \ 'All regimes show ≤4% Sharpe degradation; model is\n    robust.', 'is_robust':\
+      \ True}\n\n    \"\"\"\n    return ValidateOverfittingRiskOutput(\n        tested_regimes=[],\n\
+      \        degradation_scores=[],\n        affected_parameter_ranges=[],\n   \
+      \     robustness_summary=\"\",\n        is_robust=False,\n    )"
     name: validate_overfitting_risk
     nodes_depended_on:
     - optimize_model_parameters
@@ -1307,3 +2423,4 @@ nodes:
     prompt: Stress-test optimized parameters using 5+ different market regimes (bull,
       bear, high‑volatility, etc.). Identify parameter ranges that produced meaningful
       backtesting degradation.
+    shims: []
